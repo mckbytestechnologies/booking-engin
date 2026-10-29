@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load tz %}
+{% block title %}Cancel booking{% endblock %}
+{% block content %}
+<h1>Cancel booking {{ booking.reference }}</h1>
+<p>{{ booking.property.name }} &ndash; Room {{ booking.room.number }}, {{ booking.check_in }} to {{ booking.check_out }}</p>
+{% if outcome.free %}
+  <p>Free cancellation.{% if outcome.paid %} You will be refunded &#8377;{{ outcome.refund }}.{% endif %}</p>
+{% else %}
+  <p class="error">The free cancellation period ended on
+    {% timezone booking.property.timezone %}{{ outcome.deadline|date:"d M Y, H:i" }}{% endtimezone %}.
+    A fee of &#8377;{{ outcome.penalty }} (first night) applies.
+    {% if outcome.paid %}You will be refunded &#8377;{{ outcome.refund }}.{% endif %}</p>
+{% endif %}
+<form method="post">{% csrf_token %}
+  <button type="submit" class="linklike">Confirm cancellation</button>
+  &middot; <a href="{% url 'account' %}">Keep my booking</a>
+</form>
+{% endblock %}

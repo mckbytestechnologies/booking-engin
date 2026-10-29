@@ -1,0 +1,17 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Properties{% endblock %}
+{% block heading %}Properties{% endblock %}
+{% block content %}
+{% if user.is_superuser %}<p style="margin-bottom:16px"><a class="btn" href="{% url 'staff_property_new' %}">+ New property</a></p>{% endif %}
+<div class="card"><div class="table-wrap"><table>
+  <tr><th>Name</th><th>City</th><th>Check-in / out</th><th>Tax</th><th>Status</th><th></th></tr>
+  {% for p in properties %}<tr>
+    <td><b>{{ p.name }}</b><br><span class="muted">{{ p.slug }}</span></td>
+    <td>{{ p.city }}, {{ p.state }}</td>
+    <td>{{ p.check_in_time|time:"H:i" }} / {{ p.check_out_time|time:"H:i" }}</td>
+    <td>{{ p.tax_percent }}%</td>
+    <td><span class="badge {% if p.is_active %}s-confirmed{% else %}s-cancelled{% endif %}">{% if p.is_active %}Active{% else %}Closed{% endif %}</span></td>
+    <td class="right"><a href="{% url 'staff_property_edit' p.pk %}">Edit</a> &middot; <a href="{% url 'staff_rooms' %}?property={{ p.slug }}">Rooms</a></td>
+  </tr>{% empty %}<tr><td colspan="6" class="muted">No properties.</td></tr>{% endfor %}
+</table></div></div>
+{% endblock %}

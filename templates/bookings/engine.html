@@ -1,0 +1,847 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ site_name }} - Booking Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans+Condensed:wght@700&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% verbatim %}
+<style>
+:root{--ink:#1f2937;--muted:#718096;--line:#e2e8f0;--bg:#f4f6f8;--card:#fff;--green:#2f9e6b;--green-d:#25805a;--gold:#d4a743;--navy:#1d2b4f;--red:#c53030;--amber:#b7791f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.container{max-width:1200px;margin:0 auto;padding:0 16px 90px}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 0}
+.logo-img{height:48px;width:auto;display:block}
+.header-nav{display:flex;gap:10px}
+.btn-cancel{border:1px solid var(--line);background:#fff;padding:7px 16px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:.04em}
+.btn-cancel:hover{border-color:var(--green);color:var(--green-d)}
+
+.search-bar{position:relative;display:flex;gap:12px;align-items:flex-end;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;flex-wrap:wrap}
+.search-group{position:relative;flex:1;min-width:150px}
+.search-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.search-group input,.search-group select{width:100%;padding:10px 34px 10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;cursor:pointer}
+.search-group .icon{position:absolute;right:12px;bottom:12px;color:var(--muted);pointer-events:none}
+.btn-search{background:var(--navy);color:#fff;border:0;border-radius:6px;padding:11px 28px;font-weight:700;letter-spacing:.05em}
+.btn-search:hover{background:#142040}
+
+.calendar-popup{display:none;position:absolute;top:100%;left:16px;margin-top:8px;z-index:50;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.15);width:330px;max-width:calc(100vw - 32px)}
+.calendar-popup.open{display:block}
+.calendar-header-inputs{display:flex;gap:8px;margin-bottom:12px}
+.calendar-input-box{flex:1;border:1px solid var(--green);border-radius:6px;padding:6px 10px;font-size:12px;display:flex;gap:6px;align-items:center}
+.cal-month{text-align:center;font-weight:700;margin-bottom:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-dow{font-size:11px;color:var(--muted);padding:4px 0}
+.cal-day{border:0;background:none;padding:8px 0;border-radius:6px;font-size:13px}
+.cal-day:hover:not(:disabled){background:#e6f6ee}
+.cal-day:disabled{color:#c5ccd6;cursor:not-allowed}
+.cal-day.in-range{background:#e6f6ee;border-radius:0}
+.cal-day.edge{background:var(--green);color:#fff}
+.calendar-footer{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+.cal-nav{display:flex;justify-content:space-between;margin-top:12px}
+.cal-nav button{border:1px solid var(--line);background:#fff;border-radius:4px;padding:4px 12px}
+
+.banner{margin:18px 0;padding:34px 20px;border-radius:10px;background:linear-gradient(120deg,var(--navy),#2c3e6b);color:#fff;text-align:center}
+.banner h1{font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:34px;letter-spacing:.08em}
+.subtitle{color:var(--gold);margin-top:4px}
+
+.main-content{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.section-header{font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:22px;margin:6px 0 10px}
+.section-header span{font-family:'Open Sans',sans-serif}
+
+.room-card{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.room-card.selected{border-color:var(--green);box-shadow:0 0 0 2px rgba(47,158,107,.2)}
+.room-card.sold-out{opacity:.65}
+.room-details{display:grid;grid-template-columns:260px 1fr}
+.room-img-container{position:relative;min-height:190px;background:#e9edf2}
+.room-img-container img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.no-image-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:12px;gap:4px}
+.people-tag,.sold-out-tag,.monthly-tag{position:absolute;z-index:2;font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;color:#fff}
+.people-tag{top:8px;left:8px;background:var(--amber)}
+.people-tag[hidden]{display:none}
+.sold-out-tag{display:none;top:8px;right:8px;background:var(--red)}
+.sold-out .sold-out-tag{display:block}
+.monthly-tag{bottom:8px;left:8px;background:var(--navy)}
+.room-info{padding:14px 16px}
+.room-title{font-size:18px;font-weight:700}
+.room-amenities-link{display:block;color:var(--green-d);font-size:12px;margin:4px 0 8px;text-decoration:none}
+.room-specs{display:grid;gap:4px;font-size:13px}
+.room-specs i{width:18px;color:var(--muted)}
+.more-link{color:var(--green-d);font-size:11px;margin-left:6px}
+.monthly-note{color:var(--navy);font-weight:600}
+.availability-note{font-size:12px;font-weight:600}
+.availability-note.low{color:var(--amber)}
+.availability-note.none{color:var(--red)}
+.room-action-bar{display:flex;align-items:center;gap:16px;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line);background:#fafbfc;flex-wrap:wrap}
+.room-type{font-weight:600}
+.occupancy,.tax-info{font-size:12px;color:var(--muted)}
+.price-tag{text-align:right;margin-left:auto}
+.price-tag .amount{font-size:20px;font-weight:700}
+.btn-toggle-room{background:var(--green);color:#fff;border:0;border-radius:6px;padding:9px 26px;font-weight:700;min-width:96px}
+.btn-toggle-room:hover:not(:disabled){background:var(--green-d)}
+.btn-toggle-room.added{background:#fff;color:var(--red);border:1px solid var(--red)}
+.btn-toggle-room:disabled{background:#cbd5e0;cursor:not-allowed}
+
+.form-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px}
+.form-card-title{font-weight:700;font-size:16px;margin-bottom:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:6px;font:inherit}
+.form-field.invalid input,.form-field.invalid .phone-input-wrapper{border-color:var(--red)}
+.error-text{display:none;color:var(--red);font-size:12px;margin-top:3px}
+.form-field.invalid .error-text{display:block}
+.phone-input-wrapper{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding-left:10px}
+.phone-input-wrapper input{border:0}
+.validation-error{display:none;background:#fff5f5;border:1px solid #feb2b2;color:var(--red);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+.validation-error ul{margin-left:18px}
+.otp-row{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.btn-otp{background:var(--navy);color:#fff;border:0;border-radius:6px;padding:10px 16px;font-weight:600}
+.btn-otp.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn-otp:disabled{opacity:.55;cursor:not-allowed}
+.otp-status{font-size:13px;margin-top:8px;color:var(--muted)}
+.otp-status.error{color:var(--red)}
+.verified-badge{display:none;color:var(--green-d);font-weight:600;margin-top:10px}
+
+.steps-container{display:flex;justify-content:space-between;margin-bottom:12px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--muted);flex:1}
+.step-number{width:28px;height:28px;border-radius:50%;background:#dfe5ec;display:flex;align-items:center;justify-content:center;font-weight:700}
+.step.active{color:var(--ink);font-weight:600}
+.step.active .step-number,.step.done .step-number{background:var(--green);color:#fff}
+.summary-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;position:sticky;top:12px}
+.summary-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.summary-title{font-weight:700;font-size:16px}
+.share-link,.view-details{font-size:11px;color:var(--green-d);text-decoration:none;font-weight:600}
+.summary-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px}
+.summary-row strong{color:var(--ink)}
+.date-row{display:flex;justify-content:space-between;background:#f7f9fb;border-radius:6px;padding:8px 10px;font-size:12px}
+.date-box label{display:block;color:var(--muted)}
+.date-box span{font-weight:600}
+.total-payable{display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;padding-top:12px;border-top:1px dashed var(--line)}
+.total-payable .amount{font-size:22px;font-weight:700}
+.view-details{display:block;margin-bottom:12px}
+.terms-box{display:flex;gap:8px;font-size:12px;margin-bottom:10px}
+.btn-action-submit{width:100%;background:var(--green);color:#fff;border:0;border-radius:6px;padding:13px;font-weight:700;letter-spacing:.05em}
+.btn-action-submit:hover:not(:disabled){background:var(--green-d)}
+.btn-action-submit:disabled{background:#cbd5e0;cursor:wait}
+.booking-note{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+#summary-error{margin-top:10px;margin-bottom:0}
+
+footer{margin-top:30px;padding:20px 0;border-top:1px solid var(--line)}
+.footer-info{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px}
+.footer-contact{margin-top:8px}
+.footer-contact span{margin-right:20px}
+.badge-verified{color:var(--green-d);font-weight:600}
+.payment-bar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 20px;z-index:20;flex-wrap:wrap}
+.payment-icons{display:flex;gap:6px;flex-wrap:wrap}
+.payment-card{background:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700}
+.powered-by{font-size:12px;display:flex;align-items:center;gap:8px}
+.mck-logo{height:20px;display:block}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:10px;width:100%;max-width:720px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.monthly-box{max-width:440px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.modal-header h3{font-size:17px}
+.modal-close-btn{background:none;border:0;font-size:26px;line-height:1;color:var(--muted)}
+.modal-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--line)}
+.modal-tab{padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--muted);border-bottom:2px solid transparent}
+.modal-tab.active{color:var(--green-d);border-color:var(--green)}
+.modal-body{padding:18px;overflow-y:auto}
+.modal-body .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.modal-body .gallery img{width:100%;height:130px;object-fit:cover;border-radius:6px}
+.modal-body ul{margin-left:18px}
+.monthly-intro{margin-bottom:14px}
+.monthly-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.monthly-row select{padding:8px;border:1px solid var(--line);border-radius:6px}
+.monthly-preview{display:flex;justify-content:space-between;background:#f7f9fb;border-radius:6px;padding:10px;margin-bottom:16px;font-size:12px}
+.monthly-preview span{display:block;color:var(--muted)}
+.monthly-actions{display:flex;justify-content:flex-end;gap:10px}
+.btn-monthly-primary{background:var(--green);color:#fff;border:0;border-radius:6px;padding:9px 20px;font-weight:700}
+.btn-monthly-secondary{background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 20px}
+
+@media(max-width:900px){.main-content{grid-template-columns:1fr}.summary-panel{position:static}}
+@media(max-width:640px){.room-details{grid-template-columns:1fr}.room-img-container{min-height:200px}.form-grid{grid-template-columns:1fr}.price-tag{text-align:left;margin-left:0}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+{% endverbatim %}
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="brand-logo">
+            <a href="{% url 'home' %}"><img src="{% static 'img/logo.webp' %}" alt="{{ site_name }}" class="logo-img"></a>
+        </div>
+        <div class="header-nav">
+            <a href="{% url 'home' %}" class="btn-cancel">HOME</a>
+            <a href="{% url 'property_list' %}" class="btn-cancel">PROPERTIES</a>
+        </div>
+    </header>
+
+    <div class="search-bar">
+        <div class="search-group" id="checkin-group">
+            <label>Check-In</label>
+            <input type="text" id="checkin-input" value="{{ check_in|date:'d M Y, D' }}" data-date="{{ check_in|date:'Y-m-d' }}" readonly>
+            <i class="fa-regular fa-calendar icon"></i>
+        </div>
+        <div class="search-group" id="checkout-group">
+            <label>Check-Out</label>
+            <input type="text" id="checkout-input" value="{{ check_out|date:'d M Y, D' }}" data-date="{{ check_out|date:'Y-m-d' }}" readonly>
+            <i class="fa-regular fa-calendar icon"></i>
+        </div>
+        <div class="search-group" style="flex:1.5;">
+            <label>Room/Guest</label>
+            <select id="room-guest-select"><option value="">0 Room, 0 Guest</option></select>
+        </div>
+        <button class="btn-search" id="btn-search" type="button">SEARCH</button>
+
+        <div class="calendar-popup" id="calendar-popup">
+            <div class="calendar-header-inputs">
+                <div class="calendar-input-box"><i class="fa-regular fa-calendar" style="color:#2f9e6b;"></i><span id="cal-checkin-label"></span></div>
+                <div class="calendar-input-box" style="border-color:#ccc;"><i class="fa-regular fa-calendar" style="color:#777;"></i><span id="cal-checkout-label"></span></div>
+            </div>
+            <div id="calendar-grid-container"></div>
+            <div class="cal-nav">
+                <button type="button" id="cal-prev">&larr; Prev</button>
+                <button type="button" id="cal-next">Next &rarr;</button>
+            </div>
+            <div class="calendar-footer" id="cal-hint">Select your check-in date, then your check-out date</div>
+        </div>
+    </div>
+
+    <div class="banner">
+        <h1>{{ site_name|upper }}</h1>
+        <div class="subtitle">Serviced Apartments</div>
+    </div>
+
+    <div class="main-content">
+        <div class="left-column" id="center-content">
+
+            <div id="room-selection-view">
+                {% if form_errors %}
+                <div class="validation-error" style="display:block;">
+                    <ul>{% for e in form_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                </div>
+                {% endif %}
+
+                {% for group in groups %}
+                <div class="section-header">
+                    {{ group.property.name }}
+                    <span style="font-size:12px;font-weight:400;display:block;color:#b8891f;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ group.property.address_line }}, {{ group.property.city }}, {{ group.property.state }}
+                    </span>
+                </div>
+
+                {% for item in group.items %}
+                <div class="room-card{% if item.available_count < 1 %} sold-out{% endif %}"
+                     data-key="{{ item.key }}"
+                     data-title="{{ item.room_type }}"
+                     data-monthly="{{ item.monthly_only|yesno:'1,0' }}"
+                     data-max="{{ item.max_guests }}">
+                    <div class="room-details">
+                        <div class="room-img-container">
+                            <span class="people-tag" data-holding{% if not item.holding_count %} hidden{% endif %}>{% if item.holding_count %}{{ item.holding_count }} {% if item.holding_count == 1 %}person is{% else %}people are{% endif %} booking now{% endif %}</span>
+                            <span class="sold-out-tag">Sold Out</span>
+                            {% if item.monthly_only %}<span class="monthly-tag"><i class="fas fa-calendar-alt"></i> Monthly Stay</span>{% endif %}
+                            {% if item.cover_url %}
+                            <img src="{{ item.cover_url }}" alt="{{ item.room_type }}">
+                            {% else %}
+                            <div class="no-image-placeholder"><i class="fas fa-image"></i><div>No image</div></div>
+                            {% endif %}
+                        </div>
+                        <div class="room-info">
+                            <div class="room-title">{{ item.room_type }}</div>
+                            <a href="#" class="room-amenities-link" data-open-tab="amenities">{{ item.amenity_names|join:", "|default:"Amenities" }}</a>
+                            <div class="room-specs">
+                                <div><i class="fa-solid fa-user-group"></i> <span>Max occupancy: {{ item.max_guests }}</span></div>
+                                <div><i class="fa-solid fa-bed"></i> <span>Bed type: {{ item.bed_type }} - {{ item.bed_count }}</span> <a href="#" class="more-link" data-open-tab="bedtypes">MORE</a></div>
+                                <div><i class="fa-solid fa-building"></i> <span data-units>Units available: {{ item.available_count }}</span></div>
+                                {% if item.monthly_only %}
+                                <div class="monthly-note"><i class="fa-solid fa-calendar-days"></i> <span>Monthly stay only - book in whole months</span></div>
+                                {% endif %}
+                                <div class="availability-note{% if item.available_count == 0 %} none{% elif item.available_count <= 2 %} low{% endif %}" data-avail-note>{% if item.available_count == 0 %}No units available for these dates{% elif item.available_count <= 2 %}Only {{ item.available_count }} unit(s) left for these dates{% endif %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="room-action-bar">
+                        <div class="price-info">
+                            <div class="room-type">Room only</div>
+                            <div class="occupancy">Per night{% if item.monthly_only %} (monthly stay){% endif %}</div>
+                        </div>
+                        <div class="price-tag">
+                            <div class="amount">₹ {{ item.price|floatformat:2 }}</div>
+                            <div class="tax-info">Per night (+ taxes at checkout)</div>
+                        </div>
+                        <button type="button" class="btn-toggle-room" {% if item.available_count < 1 %}disabled{% endif %}>{% if item.available_count < 1 %}SOLD OUT{% else %}ADD{% endif %}</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% empty %}
+                <div class="form-card"><p style="color:#718096;">No rooms are listed for these dates.</p></div>
+                {% endfor %}
+            </div>
+
+            <div id="guest-details-view" style="display:none;">
+                <div class="form-card">
+                    <div class="form-card-title">Guest details</div>
+                    <div id="validation-error" class="validation-error"><ul id="error-list"></ul></div>
+                    <div class="form-grid">
+                        <div class="form-field" id="field-firstname">
+                            <input type="text" id="first-name" placeholder="First name *" maxlength="100" autocomplete="given-name">
+                            <span class="error-text">First name is required</span>
+                        </div>
+                        <div class="form-field" id="field-lastname">
+                            <input type="text" id="last-name" placeholder="Last name *" maxlength="100" autocomplete="family-name">
+                            <span class="error-text">Last name is required</span>
+                        </div>
+                        <div class="form-field" id="field-email">
+                            <input type="email" id="email" placeholder="Email *" maxlength="254" autocomplete="email">
+                            <span class="error-text">A valid email is required</span>
+                        </div>
+                        <div class="form-field" id="field-phone">
+                            <div class="phone-input-wrapper">
+                                <span>🇮🇳</span><span style="color:#666;font-size:14px;">+91</span>
+                                <input type="text" id="phone" placeholder="Phone number *" maxlength="30" autocomplete="tel-national">
+                            </div>
+                            <span class="error-text">Enter a valid phone number (10-15 digits)</span>
+                        </div>
+                    </div>
+
+                    {% if otp_enabled %}
+                    <div class="otp-row" id="otp-request-row">
+                        <button type="button" class="btn-otp" id="btn-send-otp"><i class="fas fa-envelope"></i> Send verification code</button>
+                    </div>
+                    <div class="otp-row" id="otp-verify-row" style="display:none;">
+                        <div class="form-field" style="margin-bottom:0;">
+                            <input type="text" id="otp-input" placeholder="6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+                        </div>
+                        <button type="button" class="btn-otp" id="btn-verify-otp">Verify</button>
+                        <button type="button" class="btn-otp secondary" id="btn-resend-otp" disabled>Resend (<span id="resend-timer">60</span>s)</button>
+                    </div>
+                    <div class="otp-status" id="otp-status"></div>
+                    <div class="verified-badge" id="verified-badge"><i class="fas fa-check-circle"></i> Email verified</div>
+                    {% endif %}
+                </div>
+                <div class="form-card">
+                    <div class="form-card-title">Special requests</div>
+                    <div class="form-field"><input type="text" id="special-request" placeholder="Anything we should know before you arrive?" maxlength="500"></div>
+                </div>
+                <div class="form-card">
+                    <div class="form-card-title">Payment</div>
+                    <p style="font-size:14px;color:#718096;">Your rooms are held for 30 minutes while you pay.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="steps-container">
+                <div class="step active" id="step-1"><div class="step-number">1</div><span>Select room</span></div>
+                <div class="step" id="step-2"><div class="step-number">2</div><span>Guest details</span></div>
+                <div class="step" id="step-3"><div class="step-number">3</div><span>Secure payment</span></div>
+            </div>
+            <div class="summary-panel">
+                <div class="summary-header">
+                    <span class="summary-title">Booking summary</span>
+                    <a href="#" class="share-link" id="share-link">SHARE LINK</a>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-row">
+                        <span>Rooms <strong id="summary-rooms">0</strong></span>
+                        <span>Guests <strong id="summary-guests">0</strong></span>
+                        <span>Nights <strong id="summary-nights">1</strong></span>
+                    </div>
+                    <div class="date-row">
+                        <div class="date-box"><label>Check-in</label><span id="summary-checkin">{{ check_in|date:'jS M Y' }}</span></div>
+                        <div class="date-box" style="text-align:right;"><label>Check-out</label><span id="summary-checkout">{{ check_out|date:'jS M Y' }}</span></div>
+                    </div>
+                </div>
+                <div id="summary-error" class="validation-error" role="alert"></div>
+                <div class="total-payable">
+                    <label>Total payable</label>
+                    <span class="amount" id="summary-total">₹ 0.00</span>
+                </div>
+                <a href="#" class="view-details" id="view-details">VIEW ROOM DETAILS</a>
+                <div id="terms-container" style="display:none;">
+                    <div class="terms-box">
+                        <input type="checkbox" id="agree-terms" checked>
+                        <label for="agree-terms">I agree to the Terms &amp; Conditions and the Refund &amp; Cancellation Policy</label>
+                    </div>
+                </div>
+                <button class="btn-action-submit" id="btn-main-action" type="button">PROCEED</button>
+                <div class="booking-note">Welcome to {{ site_name }} online booking.</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-info">
+            <div>
+                {% if site.address %}<strong>ADDRESS</strong><div class="footer-address">{{ site.address }}</div>{% endif %}
+                {% if site.phones %}<div class="footer-contact">{% for p in site.phones %}<span><strong>CONTACT</strong><br>{{ p }}</span>{% endfor %}</div>{% endif %}
+                {% if site.email %}<div class="footer-contact"><span><strong>EMAIL</strong><br>{{ site.email }}</span></div>{% endif %}
+            </div>
+            <div class="badges"><div class="badge-verified"><i class="fa-solid fa-shield-halved"></i> VERIFIED &amp; SECURED</div></div>
+        </div>
+    </footer>
+
+    <div class="payment-bar">
+        <div class="payment-icons">
+            <span class="payment-card" style="color:#1a0b52;">VISA</span>
+            <span class="payment-card" style="color:#eb001b;">Mastercard</span>
+            <span class="payment-card" style="color:#006fcf;">AMEX</span>
+            <span class="payment-card" style="color:#5f259f;">UPI</span>
+            <span class="payment-card" style="color:#004b8d;">Net Banking</span>
+            <span class="payment-card" style="color:#ff6600;">Wallets</span>
+        </div>
+        <div class="powered-by">
+            Crafted by
+            <a href="https://mckbytes.com" class="mck-link"><img src="https://mckbytes.com/static/img/LOGO/logo.png" alt="mckbytes" class="mck-logo"></a>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="room-details-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-title">Room details</h3>
+            <button class="modal-close-btn" id="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-tabs">
+            <div class="modal-tab active" data-tab="images">IMAGES</div>
+            <div class="modal-tab" data-tab="details">ROOM DETAILS</div>
+            <div class="modal-tab" data-tab="cancellation">CANCELLATION</div>
+            <div class="modal-tab" data-tab="tc">T&amp;C</div>
+            <div class="modal-tab" data-tab="amenities">AMENITIES</div>
+            <div class="modal-tab" data-tab="bedtypes">BED TYPES</div>
+        </div>
+        <div class="modal-body" id="modal-body-content"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="monthly-modal">
+    <div class="modal-box monthly-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-alt"></i> Monthly stay</h3>
+            <button class="modal-close-btn" id="monthly-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="monthly-intro" id="monthly-msg">This room is booked in whole months. Choose how long you want to stay.</div>
+            <div class="monthly-row">
+                <label for="monthly-months">How many months?</label>
+                <select id="monthly-months">
+                    <option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option>
+                    <option value="4">4 months</option><option value="5">5 months</option><option value="6">6 months</option>
+                    <option value="7">7 months</option><option value="8">8 months</option><option value="9">9 months</option>
+                    <option value="10">10 months</option><option value="11">11 months</option><option value="12">12 months</option>
+                </select>
+            </div>
+            <div class="monthly-preview">
+                <div><span>Check-in</span><strong id="monthly-prev-in">-</strong></div>
+                <div><span>Check-out</span><strong id="monthly-prev-out">-</strong></div>
+                <div><span>Nights</span><strong id="monthly-prev-nights">-</strong></div>
+            </div>
+            <div class="monthly-actions">
+                <button type="button" class="btn-monthly-secondary" id="monthly-cancel">Cancel</button>
+                <button type="button" class="btn-monthly-primary" id="monthly-continue">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ room_data|json_script:"room-data" }}
+<script>
+    window.BOOKING_CONFIG = {
+        today: "{{ today|date:'Y-m-d' }}",
+        csrf: "{{ csrf_token }}",
+        otpRequired: {{ otp_enabled|yesno:"true,false" }},
+        urls: {
+            availability: "{% url 'booking_availability' %}",
+            quote: "{% url 'booking_quote' %}",
+            hold: "{% url 'booking_hold' %}",
+            success: "{% url 'booking_success' %}",
+            sendOtp: "{% url 'booking_send_otp' %}",
+            verifyOtp: "{% url 'booking_verify_otp' %}",
+            createOrder: "{% url 'booking_create_order' %}",
+            verifyPayment: "{% url 'booking_verify_payment' %}"
+        }
+    };
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+{% verbatim %}
+<script>
+(function () {
+  var C = window.BOOKING_CONFIG;
+  var ROOMS = JSON.parse(document.getElementById('room-data').textContent || '{}');
+  var $ = function (id) { return document.getElementById(id); };
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DOW = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  var state = {
+    checkIn: $('checkin-input').dataset.date,
+    checkOut: $('checkout-input').dataset.date,
+    selected: {},          // key -> {quantity, guests}
+    step: 1,
+    verified: !C.otpRequired,
+    verifiedEmail: '',
+    busy: false,
+    quoteSeq: 0,
+    lastKey: null
+  };
+
+  /* ---------- helpers ---------- */
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function parse(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function nice(s) { var d = parse(s); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+  function nights() { return Math.round((parse(state.checkOut) - parse(state.checkIn)) / 86400000); }
+  function addMonths(s, n) {
+    var d = parse(s), day = d.getDate();
+    d.setDate(1); d.setMonth(d.getMonth() + n);
+    var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, last));
+    return iso(d);
+  }
+  function show(el, on) { el.style.display = on ? 'block' : 'none'; }
+  function messageFrom(data, fallback) {
+    if (data && data.error && data.error.message) return data.error.message;
+    if (data && typeof data === 'object') {
+      var out = [];
+      Object.keys(data).forEach(function (k) {
+        var v = data[k];
+        if (Array.isArray(v)) out.push(v.map(function (x) { return typeof x === 'string' ? x : JSON.stringify(x); }).join(' '));
+        else if (typeof v === 'string') out.push(v);
+        else if (v && typeof v === 'object') out.push(messageFrom(v, ''));
+      });
+      if (out.length) return out.join(' ');
+    }
+    return fallback;
+  }
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': C.csrf },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) { return { ok: r.ok, status: r.status, data: data }; });
+    });
+  }
+  function summaryError(msg) { var el = $('summary-error'); el.textContent = msg || ''; show(el, !!msg); }
+
+  /* ---------- search / navigation ---------- */
+  function search(extra) {
+    var q = new URLSearchParams(window.location.search);
+    q.set('check_in', state.checkIn); q.set('check_out', state.checkOut);
+    q.delete('add');
+    if (extra) Object.keys(extra).forEach(function (k) { q.set(k, extra[k]); });
+    window.location.search = q.toString();
+  }
+  $('btn-search').addEventListener('click', function () { search(); });
+
+  /* ---------- calendar ---------- */
+  var cal = { month: parse(state.checkIn), pickingOut: false, tempIn: null };
+  cal.month.setDate(1);
+  function renderCal() {
+    var first = new Date(cal.month.getFullYear(), cal.month.getMonth(), 1);
+    var days = new Date(cal.month.getFullYear(), cal.month.getMonth() + 1, 0).getDate();
+    var html = '<div class="cal-month">' + MONTHS[first.getMonth()] + ' ' + first.getFullYear() + '</div><div class="cal-grid">';
+    DOW.forEach(function (d) { html += '<div class="cal-dow">' + d + '</div>'; });
+    for (var i = 0; i < first.getDay(); i++) html += '<div></div>';
+    var a = cal.pickingOut ? cal.tempIn : state.checkIn, b = cal.pickingOut ? null : state.checkOut;
+    for (var d = 1; d <= days; d++) {
+      var s = iso(new Date(first.getFullYear(), first.getMonth(), d));
+      var disabled = s < C.today || (cal.pickingOut && s <= cal.tempIn);
+      var cls = 'cal-day';
+      if (s === a || s === b) cls += ' edge';
+      else if (b && s > a && s < b) cls += ' in-range';
+      html += '<button type="button" class="' + cls + '" data-d="' + s + '"' + (disabled ? ' disabled' : '') + '>' + d + '</button>';
+    }
+    $('calendar-grid-container').innerHTML = html + '</div>';
+    $('cal-checkin-label').textContent = nice(cal.pickingOut ? cal.tempIn : state.checkIn);
+    $('cal-checkout-label').textContent = cal.pickingOut ? 'Select check-out' : nice(state.checkOut);
+    $('cal-hint').textContent = cal.pickingOut ? 'Now pick your check-out date' : 'Select your check-in date, then your check-out date';
+  }
+  function openCal() { cal.pickingOut = false; cal.month = parse(state.checkIn); cal.month.setDate(1); renderCal(); $('calendar-popup').classList.add('open'); }
+  ['checkin-group', 'checkout-group'].forEach(function (id) { $(id).addEventListener('click', openCal); });
+  $('calendar-grid-container').addEventListener('click', function (e) {
+    var btn = e.target.closest('.cal-day'); if (!btn || btn.disabled) return;
+    var s = btn.dataset.d;
+    if (!cal.pickingOut) { cal.tempIn = s; cal.pickingOut = true; renderCal(); return; }
+    state.checkIn = cal.tempIn; state.checkOut = s; cal.pickingOut = false;
+    $('checkin-input').value = nice(state.checkIn); $('checkout-input').value = nice(state.checkOut);
+    $('calendar-popup').classList.remove('open');
+    search();
+  });
+  $('cal-prev').addEventListener('click', function () { cal.month.setMonth(cal.month.getMonth() - 1); renderCal(); });
+  $('cal-next').addEventListener('click', function () { cal.month.setMonth(cal.month.getMonth() + 1); renderCal(); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.search-bar')) $('calendar-popup').classList.remove('open');
+  });
+
+  /* ---------- selecting rooms ---------- */
+  function cards() { return Array.prototype.slice.call(document.querySelectorAll('.room-card')); }
+  function refreshCards() {
+    cards().forEach(function (card) {
+      var on = !!state.selected[card.dataset.key];
+      card.classList.toggle('selected', on);
+      var b = card.querySelector('.btn-toggle-room');
+      if (!b.disabled) { b.textContent = on ? 'REMOVE' : 'ADD'; b.classList.toggle('added', on); }
+    });
+  }
+  function toggle(key) {
+    if (state.selected[key]) delete state.selected[key];
+    else { state.selected[key] = { quantity: 1 }; state.lastKey = key; }
+    refreshCards(); requote();
+  }
+  cards().forEach(function (card) {
+    card.querySelector('.btn-toggle-room').addEventListener('click', function () {
+      var key = card.dataset.key;
+      if (!state.selected[key] && card.dataset.monthly === '1') { openMonthly(key); return; }
+      toggle(key);
+    });
+  });
+
+  function requote() {
+    summaryError('');
+    var items = Object.keys(state.selected).map(function (k) { return { key: k, quantity: state.selected[k].quantity }; });
+    $('summary-rooms').textContent = items.length;
+    $('summary-nights').textContent = nights();
+    $('summary-checkin').textContent = nice(state.checkIn);
+    $('summary-checkout').textContent = nice(state.checkOut);
+    if (!items.length) { $('summary-total').textContent = '₹ 0.00'; $('summary-guests').textContent = '0'; return; }
+    var seq = ++state.quoteSeq;
+    post(C.urls.quote, { check_in: state.checkIn, check_out: state.checkOut, items: items }).then(function (r) {
+      if (seq !== state.quoteSeq) return;
+      if (!r.ok) { summaryError(messageFrom(r.data, 'Could not price this selection.')); return; }
+      $('summary-total').textContent = '₹ ' + r.data.total;
+      $('summary-guests').textContent = r.data.guests;
+    }).catch(function () { summaryError('Network error. Check your connection and try again.'); });
+  }
+
+  /* ---------- monthly stays ---------- */
+  var monthlyKey = null;
+  function monthlyPreview() {
+    var n = +$('monthly-months').value, out = addMonths(state.checkIn, n);
+    $('monthly-prev-in').textContent = nice(state.checkIn);
+    $('monthly-prev-out').textContent = nice(out);
+    $('monthly-prev-nights').textContent = Math.round((parse(out) - parse(state.checkIn)) / 86400000);
+    return out;
+  }
+  function openMonthly(key) { monthlyKey = key; monthlyPreview(); $('monthly-modal').classList.add('open'); }
+  $('monthly-months').addEventListener('change', monthlyPreview);
+  $('monthly-close').addEventListener('click', function () { $('monthly-modal').classList.remove('open'); });
+  $('monthly-cancel').addEventListener('click', function () { $('monthly-modal').classList.remove('open'); });
+  $('monthly-continue').addEventListener('click', function () {
+    state.checkOut = monthlyPreview();
+    search({ add: monthlyKey });
+  });
+
+  /* ---------- details modal ---------- */
+  var modalKey = null, modalTab = 'images';
+  function renderModal() {
+    var d = ROOMS[modalKey]; if (!d) return;
+    $('modal-title').textContent = d.title;
+    Array.prototype.forEach.call(document.querySelectorAll('.modal-tab'), function (t) { t.classList.toggle('active', t.dataset.tab === modalTab); });
+    var h = '';
+    if (modalTab === 'images') {
+      h = d.images && d.images.length
+        ? '<div class="gallery">' + d.images.map(function (u) { return '<img src="' + esc(u) + '" alt="' + esc(d.title) + '">'; }).join('') + '</div>'
+        : '<p>No photos have been added for this room yet.</p>';
+    } else if (modalTab === 'details') {
+      h = '<p>' + esc(d.description || 'No description available.') + '</p><p style="margin-top:10px;"><strong>' + esc(d.property) + '</strong><br>' + esc(d.address) + '</p><p style="margin-top:10px;">' + esc(d.times) + '</p>';
+    } else if (modalTab === 'cancellation') {
+      h = '<p>' + esc(d.cancellation) + '</p><p style="margin-top:8px;">After that, the first night plus tax is charged.</p>';
+    } else if (modalTab === 'tc') {
+      h = '<ul><li>Government ID is required at check-in.</li><li>' + esc(d.times) + '</li><li>Rates are per night and taxes are added at checkout.</li></ul>';
+    } else if (modalTab === 'amenities') {
+      h = d.amenities && d.amenities.length ? '<ul>' + d.amenities.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p>No amenities listed.</p>';
+    } else if (modalTab === 'bedtypes') {
+      h = '<p>' + esc(d.bed) + '</p>';
+    }
+    $('modal-body-content').innerHTML = h;
+  }
+  function openModal(key, tab) { modalKey = key; modalTab = tab || 'images'; renderModal(); $('room-details-modal').classList.add('open'); }
+  $('modal-close').addEventListener('click', function () { $('room-details-modal').classList.remove('open'); });
+  Array.prototype.forEach.call(document.querySelectorAll('.modal-tab'), function (t) {
+    t.addEventListener('click', function () { modalTab = t.dataset.tab; renderModal(); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.modal-overlay'), function (o) {
+    o.addEventListener('click', function (e) { if (e.target === o) o.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') Array.prototype.forEach.call(document.querySelectorAll('.modal-overlay.open'), function (o) { o.classList.remove('open'); });
+  });
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('[data-open-tab]'); if (!link) return;
+    e.preventDefault();
+    openModal(link.closest('.room-card').dataset.key, link.dataset.openTab);
+  });
+  cards().forEach(function (card) {
+    card.querySelector('.room-img-container').addEventListener('click', function () { openModal(card.dataset.key, 'images'); });
+    card.querySelector('.room-title').addEventListener('click', function () { openModal(card.dataset.key, 'details'); });
+  });
+  $('view-details').addEventListener('click', function (e) {
+    e.preventDefault();
+    var key = Object.keys(state.selected)[0] || state.lastKey;
+    if (key) openModal(key, 'details'); else summaryError('Add a room to see its details.');
+  });
+  $('share-link').addEventListener('click', function (e) {
+    e.preventDefault();
+    var url = window.location.origin + window.location.pathname + '?check_in=' + state.checkIn + '&check_out=' + state.checkOut;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { summaryError(''); $('share-link').textContent = 'COPIED'; });
+  });
+
+  /* ---------- steps ---------- */
+  function setStep(n) {
+    state.step = n;
+    show($('room-selection-view'), n === 1);
+    show($('guest-details-view'), n === 2);
+    show($('terms-container'), n === 2);
+    [1, 2, 3].forEach(function (i) {
+      var el = $('step-' + i);
+      el.classList.toggle('active', i === n);
+      el.classList.toggle('done', i < n);
+    });
+    $('btn-main-action').textContent = n === 1 ? 'PROCEED' : 'RESERVE & PAY';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ---------- guest form ---------- */
+  function field(id) { return $(id); }
+  function validate() {
+    var ok = true, errors = [];
+    function mark(fid, bad, msg) { $(fid).classList.toggle('invalid', bad); if (bad) { ok = false; errors.push(msg); } }
+    mark('field-firstname', !$('first-name').value.trim(), 'First name is required.');
+    mark('field-lastname', !$('last-name').value.trim(), 'Last name is required.');
+    mark('field-email', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim()), 'Enter a valid email.');
+    var digits = $('phone').value.replace(/\D/g, '');
+    mark('field-phone', digits.length < 10 || digits.length > 15, 'Enter a valid phone number.');
+    if (C.otpRequired && !(state.verified && state.verifiedEmail === $('email').value.trim().toLowerCase())) {
+      ok = false; errors.push('Verify your email with the code we send you.');
+    }
+    if (!$('agree-terms').checked) { ok = false; errors.push('Accept the terms to continue.'); }
+    var box = $('validation-error');
+    $('error-list').innerHTML = errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('');
+    show(box, errors.length > 0);
+    return ok;
+  }
+
+  /* ---------- OTP ---------- */
+  var timer = null;
+  function otpMsg(text, bad) { var s = $('otp-status'); if (!s) return; s.textContent = text; s.classList.toggle('error', !!bad); }
+  function startResend() {
+    var secs = 60, b = $('btn-resend-otp'), t = $('resend-timer');
+    b.disabled = true; t.textContent = secs;
+    clearInterval(timer);
+    timer = setInterval(function () { secs--; t.textContent = secs; if (secs <= 0) { clearInterval(timer); b.disabled = false; b.textContent = 'Resend code'; } }, 1000);
+  }
+  function sendOtp() {
+    var email = $('email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('field-email').classList.add('invalid'); return; }
+    $('field-email').classList.remove('invalid');
+    otpMsg('Sending code...');
+    post(C.urls.sendOtp, { email: email }).then(function (r) {
+      if (!r.ok) { otpMsg(messageFrom(r.data, 'Could not send the code.'), true); return; }
+      otpMsg(r.data.message || 'Code sent.');
+      show($('otp-request-row'), false); $('otp-verify-row').style.display = 'flex'; startResend();
+    }).catch(function () { otpMsg('Network error. Try again.', true); });
+  }
+  if (C.otpRequired) {
+    $('btn-send-otp').addEventListener('click', sendOtp);
+    $('btn-resend-otp').addEventListener('click', sendOtp);
+    $('btn-verify-otp').addEventListener('click', function () {
+      var email = $('email').value.trim(), code = $('otp-input').value.trim();
+      if (!/^\d{6}$/.test(code)) { otpMsg('Enter the 6-digit code.', true); return; }
+      post(C.urls.verifyOtp, { email: email, otp: code }).then(function (r) {
+        if (!r.ok) { otpMsg(messageFrom(r.data, 'That code is not valid.'), true); return; }
+        state.verified = true; state.verifiedEmail = email.toLowerCase();
+        $('otp-verify-row').style.display = 'none'; otpMsg('');
+        $('verified-badge').style.display = 'block'; $('email').readOnly = true;
+      }).catch(function () { otpMsg('Network error. Try again.', true); });
+    });
+  }
+
+  /* ---------- reserve and pay ---------- */
+  function setBusy(on, label) {
+    state.busy = on;
+    var b = $('btn-main-action'); b.disabled = on;
+    if (label) b.textContent = label;
+  }
+  function pay() {
+    var items = Object.keys(state.selected).map(function (k) { return { key: k, quantity: state.selected[k].quantity }; });
+    setBusy(true, 'RESERVING...');
+    post(C.urls.hold, {
+      check_in: state.checkIn, check_out: state.checkOut, items: items,
+      first_name: $('first-name').value.trim(), last_name: $('last-name').value.trim(),
+      email: $('email').value.trim(), phone: $('phone').value.trim(),
+      special_request: $('special-request').value.trim()
+    }).then(function (h) {
+      if (!h.ok) { throw new Error(messageFrom(h.data, 'Could not reserve these rooms.')); }
+      var ref = h.data.group_ref;
+      setBusy(true, 'OPENING PAYMENT...');
+      return post(C.urls.createOrder, { group_ref: ref }).then(function (o) {
+        if (!o.ok) throw new Error(messageFrom(o.data, 'Could not start the payment.'));
+        openCheckout(o.data, ref);
+      });
+    }).catch(function (err) {
+      setBusy(false, 'RESERVE & PAY');
+      var box = $('validation-error');
+      $('error-list').innerHTML = '<li>' + esc(err.message || 'Something went wrong. Try again.') + '</li>';
+      show(box, true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+  function openCheckout(o, ref) {
+    if (typeof Razorpay === 'undefined') { throw new Error('The payment window could not load. Check your connection and try again.'); }
+    setStep(3);
+    var rzp = new Razorpay({
+      key: o.key, order_id: o.order_id, amount: o.amount, currency: o.currency,
+      name: o.name, description: o.description,
+      prefill: { name: $('first-name').value.trim() + ' ' + $('last-name').value.trim(), email: $('email').value.trim(), contact: $('phone').value.trim() },
+      theme: { color: '#2f9e6b' },
+      handler: function (resp) {
+        setBusy(true, 'CONFIRMING...');
+        post(C.urls.verifyPayment, {
+          razorpay_order_id: resp.razorpay_order_id,
+          razorpay_payment_id: resp.razorpay_payment_id,
+          razorpay_signature: resp.razorpay_signature
+        }).then(function (v) {
+          if (!v.ok) { setBusy(false, 'RESERVE & PAY'); setStep(2); $('error-list').innerHTML = '<li>' + esc(messageFrom(v.data, 'We could not confirm your payment.')) + '</li>'; show($('validation-error'), true); return; }
+          window.location.href = C.urls.success + '?ref=' + encodeURIComponent(ref);
+        }).catch(function () { window.location.href = C.urls.success + '?ref=' + encodeURIComponent(ref); });
+      },
+      modal: { ondismiss: function () { setBusy(false, 'RESERVE & PAY'); setStep(2); } }
+    });
+    rzp.on('payment.failed', function () { setBusy(false, 'RESERVE & PAY'); });
+    rzp.open();
+  }
+
+  $('btn-main-action').addEventListener('click', function () {
+    if (state.busy) return;
+    if (state.step === 1) {
+      if (!Object.keys(state.selected).length) { summaryError('Add at least one room to continue.'); return; }
+      summaryError(''); setStep(2); return;
+    }
+    if (validate()) pay();
+  });
+
+  /* ---------- init ---------- */
+  requote();
+  var add = new URLSearchParams(window.location.search).get('add');
+  if (add) {
+    var card = cards().filter(function (c) { return c.dataset.key === add; })[0];
+    if (card && !card.querySelector('.btn-toggle-room').disabled) toggle(add);
+  }
+})();
+</script>
+{% endverbatim %}
+</body>
+</html>

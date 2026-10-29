@@ -1,0 +1,71 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Bookings{% endblock %}
+{% block heading %}Bookings{% endblock %}
+
+{% block extra_head %}
+<style>
+  .bk-filters{display:grid;grid-template-columns:minmax(200px,2fr) repeat(4,minmax(130px,1fr)) auto;gap:14px;align-items:end}
+  .bk-filters input,.bk-filters select{width:100%}
+  .bk-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .bk-ref{font-weight:700}
+  .bk-sub{font-weight:400;color:var(--muted);font-size:12px}
+  @media(max-width:1100px){.bk-filters{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<form method="get" class="panel bk-filters">
+  <div><label>Search</label>{{ form.q }}</div>
+  <div><label>Status</label>{{ form.status }}</div>
+  <div><label>Property</label>{{ form.property }}</div>
+  <div><label>Check-in from</label>{{ form.date_from }}</div>
+  <div><label>Check-in to</label>{{ form.date_to }}</div>
+  <div class="bk-actions">
+    <button type="submit"><i class="fa-solid fa-filter"></i>&nbsp; Filter</button>
+    <a class="btn sec" href="{% url 'staff_bookings' %}">Reset</a>
+  </div>
+  {% if form.errors %}<p class="err" style="grid-column:1/-1">Some filters are invalid and were ignored.</p>{% endif %}
+</form>
+
+<section class="panel">
+  <div class="bar">
+    <span>All bookings <small>{% if is_paginated %}{{ page_obj.paginator.count }}{% else %}{{ bookings|length }}{% endif %} found</small></span>
+    <a class="btn sec" href="{% url 'staff_new_booking' %}">+ New booking</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Reference</th><th>Guest</th><th>Property / room</th><th>Stay</th>
+          <th>Status</th><th>Payment</th><th class="right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+        <tr>
+          <td><a class="bk-ref" href="{% url 'staff_booking_detail' b.reference %}">{{ b.reference }}</a><br><span class="bk-sub">{{ b.get_source_display }}</span></td>
+          <td>{{ b.customer_name }}<br><span class="bk-sub">{{ b.customer_phone }}</span></td>
+          <td>{{ b.property.name }}<br><span class="bk-sub">Room {{ b.room.number }}</span></td>
+          <td>{{ b.check_in|date:"d M" }} &rarr; {{ b.check_out|date:"d M Y" }}</td>
+          <td><span class="badge s-{{ b.status|lower }}">{{ b.get_status_display }}</span></td>
+          <td><span class="badge p-{{ b.payment_status|lower }}">{{ b.get_payment_status_display }}</span></td>
+          <td class="right">&#8377;{{ b.total_amount }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="muted" style="text-align:center;padding:22px">No bookings match.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div class="pager">
+    {% if page_obj.has_previous %}<a class="btn sec" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">&larr; Previous</a>{% endif %}
+    <span class="muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} &middot; {{ page_obj.paginator.count }} bookings</span>
+    {% if page_obj.has_next %}<a class="btn sec" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Next &rarr;</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

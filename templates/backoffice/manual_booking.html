@@ -1,0 +1,38 @@
+{% extends "backoffice/base.html" %}
+{% block title %}New booking{% endblock %}
+{% block heading %}New booking{% endblock %}
+{% block content %}
+<form method="get" class="card filters">
+  <div><label>Property</label>{{ search.property }}</div>
+  <div><label>Check-in</label>{{ search.check_in }}</div>
+  <div><label>Check-out</label>{{ search.check_out }}</div>
+  <div><button type="submit">Check availability</button></div>
+  {% if search.is_bound %}<p class="err" style="width:100%">{{ search.non_field_errors }}{% for f in search %}{{ f.errors }}{% endfor %}</p>{% endif %}
+</form>
+
+{% if groups is not None %}
+<form method="post" class="card">
+  {% csrf_token %}
+  <input type="hidden" name="property" value="{{ search.cleaned_data.property }}">
+  <input type="hidden" name="check_in" value="{{ search.cleaned_data.check_in|date:'Y-m-d' }}">
+  <input type="hidden" name="check_out" value="{{ search.cleaned_data.check_out|date:'Y-m-d' }}">
+  <h2>Rooms <small>{{ search.cleaned_data.check_in|date:"d M" }} &rarr; {{ search.cleaned_data.check_out|date:"d M Y" }}</small></h2>
+  <div class="table-wrap"><table>
+    <tr><th>Room type</th><th class="right">Rate / night</th><th>Sleeps</th><th>Free</th><th>Rooms</th><th>Guests per room</th></tr>
+    {% for g in groups %}{% for item in g.items %}<tr>
+      <td><b>{{ item.room_type }}</b>{% if item.monthly_only %}<br><span class="muted">Monthly stay</span>{% endif %}</td>
+      <td class="right">&#8377;{{ item.price }}</td><td>{{ item.max_guests }}</td><td>{{ item.available_count }}</td>
+      <td>{% if item.available_count %}<input type="number" name="qty__{{ item.key }}" min="0" max="{{ item.available_count }}" value="{{ item.qty }}" style="width:70px">{% else %}<span class="err">Sold out</span>{% endif %}</td>
+      <td>{% if item.available_count %}<input type="number" name="guests__{{ item.key }}" min="1" max="{{ item.max_guests }}" style="width:70px" placeholder="auto">{% endif %}</td>
+    </tr>{% endfor %}{% empty %}<tr><td colspan="6" class="muted">No rooms at this property.</td></tr>{% endfor %}
+  </table></div>
+  <p class="muted" style="margin:8px 0 16px">Prices exclude tax. The total, with tax and any extra-guest charge, is calculated by the server when you create the booking.</p>
+
+  <h2>Guest</h2>
+  <div class="filters" style="align-items:flex-start">
+    {% for f in guest %}<div style="min-width:220px;flex:1"><label>{{ f.label }}</label>{{ f }}{% for e in f.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>{% endfor %}
+  </div>
+  <p style="margin-top:16px"><button type="submit">Create booking</button></p>
+</form>
+{% endif %}
+{% endblock %}

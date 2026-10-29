@@ -1,0 +1,142 @@
+{% extends "backoffice/base.html" %}
+{% load tz %}
+{% block title %}{{ b.reference }}{% endblock %}
+{% block heading %}<a href="{% url 'staff_bookings' %}">Bookings</a> / {{ b.reference }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .box{padding:0;overflow:hidden}
+  .box .body{padding:18px 20px}
+  .bar .badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .bar .badge{font-size:10.5px}
+  .detail dl.kv{grid-template-columns:150px 1fr;gap:0}
+  .detail dl.kv dt,.detail dl.kv dd{padding:11px 0;border-bottom:1px solid var(--line)}
+  .detail dl.kv dt{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:13px}
+  .detail dl.kv dd{font-weight:600}
+  .detail dl.kv dt:last-of-type,.detail dl.kv dd:last-of-type{border-bottom:0}
+  .charges td:last-child{text-align:right}
+  .charges tr.total td{background:#eef2ff;font-size:14px}
+  .due{color:var(--red)}
+  .aside-box .act{padding:16px 20px}
+  .aside-box .act:first-child{padding-top:16px}
+  .aside-box .act h3{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .aside-box .act form{gap:10px}
+  .aside-box .act input,.aside-box .act select{width:100%}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- summary cards -->
+<div class="stats">
+  <div class="stat blue"><i class="fa-solid fa-indian-rupee-sign"></i><b>&#8377;{{ b.total_amount }}</b><span>Total</span></div>
+  <div class="stat {% if balance %}sky{% else %}mint{% endif %}"><i class="fa-solid fa-wallet"></i><b>&#8377;{{ balance }}</b><span>Balance due</span></div>
+  <div class="stat cyan"><i class="fa-regular fa-moon"></i><b>{{ b.nights }}</b><span>Night{{ b.nights|pluralize }}</span></div>
+  <div class="stat mint"><i class="fa-solid fa-user-group"></i><b>{{ b.guests }}</b><span>Guest{{ b.guests|pluralize }}</span></div>
+</div>
+
+<div class="grid2">
+<div>
+
+  <section class="panel box detail">
+    <div class="bar" style="margin-top:0;border-radius:0">
+      <span>{{ b.customer_name }}</span>
+      <span class="badges">
+        <span class="badge s-{{ b.status|lower }}">{{ b.get_status_display }}</span>
+        <span class="badge p-{{ b.payment_status|lower }}">{{ b.get_payment_status_display }}</span>
+      </span>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>Property</dt><dd>{{ b.property.name }}</dd>
+        <dt>Room</dt><dd>{{ b.room.number }}</dd>
+        <dt>Stay</dt><dd>{{ b.check_in|date:"d M Y" }} &rarr; {{ b.check_out|date:"d M Y" }} ({{ b.nights }} night{{ b.nights|pluralize }})</dd>
+        <dt>Guests</dt><dd>{{ b.guests }}</dd>
+        <dt>Contact</dt><dd>{{ b.customer_phone }} &middot; {{ b.customer_email }}</dd>
+        <dt>Source</dt><dd>{{ b.get_source_display }}</dd>
+        {% if b.actual_check_in %}<dt>Checked in</dt><dd>{{ b.actual_check_in|date:"d M Y H:i" }}</dd>{% endif %}
+        {% if b.actual_check_out %}<dt>Checked out</dt><dd>{{ b.actual_check_out|date:"d M Y H:i" }}</dd>{% endif %}
+        {% if b.special_requests %}<dt>Guest request</dt><dd>{{ b.special_requests }}</dd>{% endif %}
+        {% if b.internal_notes %}<dt>Internal notes</dt><dd>{{ b.internal_notes }}</dd>{% endif %}
+      </dl>
+    </div>
+  </section>
+
+  <section class="panel box">
+    <div class="bar" style="margin-top:0;border-radius:0"><span>Charges</span></div>
+    <div class="table-wrap">
+      <table class="charges">
+        <tr><td>Rate per night</td><td>&#8377;{{ b.price_per_night }}</td></tr>
+        <tr><td>Additional charges</td><td>&#8377;{{ b.additional_charges }}</td></tr>
+        <tr><td>Tax</td><td>&#8377;{{ b.tax_amount }}</td></tr>
+        <tr class="total"><td><b>Total</b></td><td><b>&#8377;{{ b.total_amount }}</b></td></tr>
+        <tr><td>Balance due</td><td><b {% if balance %}class="due"{% endif %}>&#8377;{{ balance }}</b></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel box">
+    <div class="bar" style="margin-top:0;border-radius:0"><span>History</span></div>
+    {% timezone b.property.timezone %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>When</th><th>Event</th><th>Change</th><th>By</th><th>Note</th></tr></thead>
+        <tbody>
+        {% for h in history %}<tr>
+          <td>{{ h.created_at|date:"d M Y H:i" }}</td>
+          <td>{{ h.get_action_display }}</td>
+          <td>{% if h.to_status %}{{ h.from_status|default:"-" }} &rarr; {{ h.to_status }}{% endif %}</td>
+          <td>{{ h.actor_label }}</td>
+          <td>{{ h.reason }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="muted" style="text-align:center">No history recorded.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endtimezone %}
+  </section>
+
+</div>
+
+<aside class="panel box aside-box">
+  <div class="bar" style="margin-top:0;border-radius:0"><span>Actions</span></div>
+
+  {% if actions.check_in %}<div class="act"><h3>Check in</h3>
+    <form method="post" action="{% url 'staff_booking_action' b.reference 'check-in' %}">{% csrf_token %}<button>Check in guest</button></form></div>{% endif %}
+
+  {% if actions.check_out %}<div class="act"><h3>Check out</h3>
+    <form method="post" action="{% url 'staff_booking_action' b.reference 'check-out' %}">{% csrf_token %}
+      {% if balance %}<p class="err">&#8377;{{ balance }} is still due.</p>{% endif %}
+      {% if actions.manager %}
+        <label class="chk"><input type="checkbox" name="override_unpaid"> Check out with balance unpaid</label>
+        <label class="chk"><input type="checkbox" name="release_unused_nights"> Release unused nights</label>
+        <input name="reason" placeholder="Reason (required for the options above)" maxlength="255">
+      {% endif %}
+      <button>Check out guest</button></form></div>{% endif %}
+
+  {% if actions.mark_paid %}<div class="act"><h3>Record desk payment (&#8377;{{ balance }})</h3>
+    <form method="post" action="{% url 'staff_booking_action' b.reference 'mark-paid' %}">{% csrf_token %}
+      <select name="method"><option value="CASH">Cash</option><option value="CARD">Card</option><option value="UPI">UPI</option></select>
+      <input name="note" placeholder="Note (optional)" maxlength="255">
+      <button>Record payment</button></form></div>{% endif %}
+
+  {% if actions.extend %}<div class="act"><h3>Extend stay</h3>
+    <form method="post" action="{% url 'staff_booking_action' b.reference 'extend' %}">{% csrf_token %}
+      <input type="date" name="new_check_out" required>
+      <button>Extend</button></form></div>{% endif %}
+
+  {% if actions.no_show %}<div class="act"><h3>No-show</h3>
+    <form method="post" action="{% url 'staff_booking_action' b.reference 'no-show' %}" onsubmit="return confirm('Mark this booking as a no-show?')">{% csrf_token %}
+      <button class="danger">Mark as no-show</button></form></div>{% endif %}
+
+  {% if actions.cancel %}<div class="act"><h3>Cancel booking</h3>
+    <form method="post" action="{% url 'staff_booking_action' b.reference 'cancel' %}" onsubmit="return confirm('Cancel this booking?')">{% csrf_token %}
+      <input name="reason" placeholder="Reason" maxlength="255">
+      {% if actions.manager %}<label class="chk"><input type="checkbox" name="waive_penalty"> Waive cancellation fee (needs a reason)</label>{% endif %}
+      <button class="danger">Cancel booking</button></form></div>{% endif %}
+
+  {% if not actions.check_in and not actions.check_out and not actions.mark_paid and not actions.extend and not actions.no_show and not actions.cancel %}
+    <div class="act"><p class="muted">No actions are available for this booking.</p></div>{% endif %}
+</aside>
+</div>
+{% endblock %}

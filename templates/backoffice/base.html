@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Staff{% endblock %} · Staff console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+  --frame:#2c45ab;
+  --side:#4265d8;
+  --side-dark:#3a58c4;
+  --accent:#5fe3c4;
+  --blue:#4568dc;
+  --sky:#7fc6f4;
+  --cyan:#62dfe0;
+  --mint:#5fd5ae;
+  --bg:#faf9fb;
+  --grey:#f1f0f2;
+  --line:#e8eaf2;
+  --text:#2d3a63;
+  --muted:#8a93ab;
+  --red:#d64545;
+  --green:#2f9e6b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',Arial,sans-serif;background:var(--frame);color:var(--text);font-size:14px;line-height:1.5;padding:18px}
+a{color:var(--blue);text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:calc(100vh - 36px);border-radius:6px;overflow:hidden;background:var(--bg);box-shadow:0 20px 50px rgba(0,0,0,.25)}
+
+/* ---------- sidebar ---------- */
+.side{width:214px;background:var(--side);color:#fff;display:flex;flex-direction:column;flex-shrink:0;transition:width .2s ease}
+.brand{display:flex;align-items:center;gap:10px;padding:26px 24px 34px;font-weight:700;letter-spacing:.08em;font-size:14px;white-space:nowrap}
+.brand i{font-size:22px}
+.brand b{color:var(--accent)}
+.side nav.staff-nav{display:flex;flex-direction:column;flex:1;min-width:0}
+.side nav.staff-nav a,.side .navbtn{display:flex;align-items:center;gap:14px;padding:16px 28px;color:#c9d5ff;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;border-left:3px solid transparent;background:none;border-top:0;border-right:0;border-bottom:0;width:100%;text-align:left;cursor:pointer;border-radius:0;font-family:inherit}
+.side nav.staff-nav a i,.side .navbtn i{font-size:15px;width:18px;text-align:center}
+.side nav.staff-nav a:hover,.side .navbtn:hover{background:rgba(255,255,255,.08);color:#fff;filter:none}
+.side nav.staff-nav a.on{background:var(--side-dark);color:#fff;border-left-color:var(--accent)}
+.side nav.staff-nav a.on i{color:var(--accent)}
+.side-foot{padding:10px 0 22px;display:flex;flex-direction:column;gap:6px}
+.side-foot form{display:block}
+.collapse{margin:14px auto 0;width:34px;height:34px;border-radius:50%;border:0;background:var(--side-dark);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.collapse i{transition:transform .2s}
+.shell.collapsed .side{width:74px}
+.shell.collapsed .lbl,.shell.collapsed .brand span{display:none}
+.shell.collapsed .side nav.staff-nav a,.shell.collapsed .side .navbtn{padding-left:28px}
+.shell.collapsed .collapse i{transform:rotate(180deg)}
+
+/* ---------- main ---------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:26px 30px 8px}
+.top .title{font-size:19px;font-weight:300;color:var(--text)}
+.top .title strong{font-weight:700}
+.who{display:flex;align-items:center;gap:8px;border:1px solid #c9d3f5;border-radius:999px;padding:6px 14px 6px 8px;background:#fff;font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
+.who .av{width:22px;height:22px;border-radius:50%;background:#dfe7ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px}
+.content{padding:16px 30px 34px;max-width:1400px;width:100%}
+
+/* ---------- buttons and fields ---------- */
+button,.btn{font:inherit;font-weight:700;font-size:12px;letter-spacing:.04em;border:0;border-radius:999px;padding:9px 20px;cursor:pointer;background:var(--blue);color:#fff;display:inline-block}
+button:hover,.btn:hover{filter:brightness(.93)}
+.btn.sec,button.sec{background:#fff;color:var(--blue);border:1px solid #b9c6f3}
+button.danger{background:var(--red)}
+button.link{background:none;color:var(--blue);padding:0;border-radius:0}
+input,select,textarea{font:inherit;padding:9px 12px;border:1px solid #d5dbef;border-radius:999px;background:#fff;color:var(--text);max-width:100%}
+textarea{border-radius:12px}
+input:focus,select:focus,textarea:focus{outline:2px solid #b9c6f3;border-color:var(--blue)}
+label{font-size:10.5px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em}
+
+/* ---------- messages ---------- */
+.msgs{list-style:none;margin-bottom:16px}
+.msgs li{padding:10px 14px;border-radius:6px;margin-bottom:8px;border:1px solid}
+.msgs .success{background:#f0fff4;border-color:#9ae6b4;color:#22543d}
+.msgs .error{background:#fff5f5;border-color:#feb2b2;color:#742a2a}
+.msgs .warning{background:#fffaf0;border-color:#f6e05e;color:#744210}
+.msgs .info{background:#ebf8ff;border-color:#90cdf4;color:#2a4365}
+
+/* ---------- cards and panels ---------- */
+.card,.panel{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px;margin-bottom:22px}
+.card h2,.panel h2{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.card h2 small,.panel h2 small{font-weight:400;color:var(--muted);margin-left:8px;font-size:12px}
+
+/* summary cards across the top */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:22px}
+.stat{position:relative;overflow:hidden;border-radius:6px;padding:20px;color:#fff;min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
+.stat::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.1)}
+.stat i{font-size:17px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center}
+.stat b{font-size:26px;font-weight:700;line-height:1;margin-top:8px}
+.stat span{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.9;margin-top:6px}
+.stat.blue{background:var(--blue)}
+.stat.sky{background:var(--sky)}
+.stat.cyan{background:var(--cyan)}
+.stat.mint{background:var(--mint)}
+
+/* tabs */
+.tabs{display:flex;gap:30px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--blue);font-size:12px;font-weight:600;letter-spacing:.02em;padding:10px 2px 14px;white-space:nowrap;margin-bottom:-1px}
+.tab:hover{filter:none;color:#2b46b3}
+.tab.on{color:var(--text);border-bottom-color:var(--blue)}
+.pane{display:none}
+.pane.on{display:block}
+.pane-title{font-size:19px;font-weight:700;margin-bottom:12px}
+
+/* pill chips (like the cloud account switcher) */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;background:#eef1fb;border-radius:999px;padding:5px;width:max-content;max-width:100%}
+.chip{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--text);padding:7px 16px;border-radius:999px;font-size:12px;font-weight:600}
+.chip b{background:#fff;border-radius:999px;padding:0 9px;min-width:24px;text-align:center;font-size:12px}
+a.chip:hover{background:#fff}
+.chip.alert b{background:var(--red);color:#fff}
+
+/* blue header bar above a table */
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--blue);color:#fff;padding:10px 18px;border-radius:3px 3px 0 0;font-weight:600;font-size:14px;margin-top:6px}
+.bar small{font-weight:400;opacity:.85;margin-left:8px}
+.bar .btn.sec{padding:4px 14px;font-size:11px;background:#fff;color:var(--blue);border:0}
+.table-wrap{width:100%;overflow-x:auto;background:var(--grey);padding:6px 20px 16px}
+.bar + .table-wrap{border-radius:0 0 3px 3px}
+
+/* tables: white rows on a grey tray */
+table{width:100%;border-collapse:separate;border-spacing:0 6px}
+th{text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;padding:8px 14px}
+td{background:#fff;padding:13px 14px;vertical-align:middle;font-size:13px;font-weight:600;box-shadow:0 1px 0 #eceef6}
+td:first-child{border-radius:4px 0 0 4px}
+td:last-child{border-radius:0 4px 4px 0}
+tr:hover td{background:#fbfcff}
+
+/* badges */
+.badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;background:#edf0f8;color:#4a5578}
+.s-confirmed{background:#e6fffa;color:#234e52}
+.s-checked_in{background:#e6eeff;color:#2a4a9b}
+.s-pending{background:#fff6e6;color:#7b4a1e}
+.s-cancelled,.s-no_show,.s-expired{background:#fff0f0;color:#9b2c2c}
+.s-checked_out{background:#edf0f8;color:#4a5578}
+.s-active{background:#e6fffa;color:#234e52}
+.p-paid{background:#e8f9ef;color:#22543d}
+.p-unpaid{background:#fff0f0;color:#9b2c2c}
+.p-partially_paid{background:#fff6e6;color:#7b4a1e}
+
+/* kpi tiles (used by other staff pages) */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:6px}
+.kpi{display:block;background:var(--grey);border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:6px;padding:12px;color:var(--text)}
+.kpi:hover{border-top-color:var(--accent)}
+.kpi b{display:block;font-size:26px;line-height:1.1}
+.kpi span{color:var(--muted);font-size:12px;font-weight:600}
+.kpi.alert{border-top-color:var(--red)}
+
+/* other layout helpers kept from the old console */
+.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.filters>div{min-width:140px}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px}
+.kv dt{color:var(--muted);font-weight:600}
+.act{border-top:1px solid var(--line);padding:14px 0}
+.act:first-child{border-top:0;padding-top:0}
+.act h3{font-size:13px;margin-bottom:8px}
+.act form{display:grid;gap:8px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600;color:var(--text);text-transform:none;letter-spacing:0}
+.chk input{width:auto}
+.pager{display:flex;gap:14px;align-items:center;justify-content:center;margin-top:14px}
+.muted{color:var(--muted)}
+.right{text-align:right}
+.err{color:var(--red);font-size:12px}
+
+/* ---------- tablet / mobile ---------- */
+@media (max-width:860px){
+  body{padding:0}
+  .shell{flex-direction:column;border-radius:0;min-height:100vh}
+  .side,.shell.collapsed .side{width:100%}
+  .brand{padding:14px 16px 6px}
+  .side nav.staff-nav{flex-direction:row;overflow-x:auto;flex:none;padding:0 8px 8px}
+  .side nav.staff-nav a,.side .navbtn{width:auto;padding:11px 14px;border-left:0;border-bottom:3px solid transparent;border-radius:6px}
+  .side nav.staff-nav a.on{border-bottom-color:var(--accent)}
+  .side-foot{flex-direction:row;padding:0 8px 10px;overflow-x:auto}
+  .side-foot form{display:inline}
+  .collapse{display:none}
+  .grid2{grid-template-columns:1fr}
+  .top{padding:16px 16px 4px}
+  .content{padding:12px 16px 24px}
+  .table-wrap{padding:6px 10px 12px}
+}
+@media (max-width:480px){
+  .who{width:100%}
+  .kv{grid-template-columns:110px 1fr}
+  .filters>div{min-width:100%}
+  .chips{border-radius:16px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+
+<body>
+<div class="shell" id="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand"><i class="fa-solid fa-hotel"></i><span>STAFF<b>HUB</b></span></div>
+
+    {% with n=request.resolver_match.url_name %}
+    <nav class="staff-nav" aria-label="Staff navigation">
+      <a href="{% url 'staff_dashboard' %}" class="{% if n == 'staff_dashboard' %}on{% endif %}"><i class="fa-solid fa-gauge-high"></i><span class="lbl">Dashboard</span></a>
+      <a href="{% url 'staff_bookings' %}" class="{% if n == 'staff_bookings' or n == 'staff_booking_detail' or n == 'staff_booking_action' %}on{% endif %}"><i class="fa-regular fa-calendar-check"></i><span class="lbl">Bookings</span></a>
+      <a href="{% url 'staff_new_booking' %}" class="{% if n == 'staff_new_booking' %}on{% endif %}"><i class="fa-solid fa-circle-plus"></i><span class="lbl">New booking</span></a>
+      <a href="{% url 'staff_properties' %}" class="{% if n == 'staff_properties' or n == 'staff_property_edit' or n == 'staff_property_image_add' or n == 'staff_property_image_delete' %}on{% endif %}"><i class="fa-regular fa-building"></i><span class="lbl">Properties</span></a>
+      <a href="{% url 'staff_property_new' %}" class="{% if n == 'staff_property_new' %}on{% endif %}"><i class="fa-solid fa-plus"></i><span class="lbl">Add property</span></a>
+      <a href="{% url 'staff_rooms' %}" class="{% if n == 'staff_rooms' or n == 'staff_room_edit' or n == 'staff_room_image_add' or n == 'staff_room_image_delete' %}on{% endif %}"><i class="fa-solid fa-bed"></i><span class="lbl">Rooms</span></a>
+      <a href="{% url 'staff_room_new' %}" class="{% if n == 'staff_room_new' %}on{% endif %}"><i class="fa-solid fa-plus"></i><span class="lbl">Add room</span></a>
+      <a href="{% url 'staff_blocks' %}" class="{% if n == 'staff_blocks' or n == 'staff_block_new' %}on{% endif %}"><i class="fa-solid fa-ban"></i><span class="lbl">Room blocks</span></a>
+      <a href="{% url 'staff_roomtypes' %}" class="{% if n == 'staff_roomtypes' or n == 'staff_roomtype_new' or n == 'staff_roomtype_edit' %}on{% endif %}"><i class="fa-solid fa-layer-group"></i><span class="lbl">Room types</span></a>
+      <a href="{% url 'staff_bedtypes' %}" class="{% if n == 'staff_bedtypes' or n == 'staff_bedtype_new' or n == 'staff_bedtype_edit' %}on{% endif %}"><i class="fa-solid fa-bed-pulse"></i><span class="lbl">Bed types</span></a>
+      <a href="{% url 'staff_amenities' %}" class="{% if n == 'staff_amenities' or n == 'staff_amenity_new' or n == 'staff_amenity_edit' %}on{% endif %}"><i class="fa-solid fa-wifi"></i><span class="lbl">Amenities</span></a>
+      {% if user.is_superuser %}
+      <a href="{% url 'staff_team' %}" class="{% if n == 'staff_team' or n == 'staff_team_new' or n == 'staff_team_edit' %}on{% endif %}"><i class="fa-solid fa-users-gear"></i><span class="lbl">Staff team</span></a>
+      {% endif %}
+    </nav>
+    {% endwith %}
+
+    <div class="side-foot">
+      <a href="{% url 'home' %}" class="navbtn" style="text-decoration:none"><i class="fa-solid fa-arrow-left"></i><span class="lbl">Public site</span></a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+        <button type="submit" class="navbtn"><i class="fa-solid fa-right-from-bracket"></i><span class="lbl">Logout</span></button>
+      </form>
+      <button type="button" class="collapse" id="collapse-btn" aria-label="Collapse menu"><i class="fa-solid fa-chevron-left"></i></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="top">
+      <span class="title">Staff <strong>{% block heading %}{% endblock %}</strong></span>
+      <div class="who">
+        <span class="av"><i class="fa-solid fa-user"></i></span>
+        <span>{{ user.email|default:user.username }}</span>
+      </div>
+    </header>
+
+    <main class="content">
+      {% if messages %}
+      <ul class="msgs">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script>
+  document.getElementById('collapse-btn').addEventListener('click', function () {
+    document.getElementById('shell').classList.toggle('collapsed');
+  });
+</script>
+</body>
+</html>

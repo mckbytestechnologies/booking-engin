@@ -1,0 +1,149 @@
+{% extends "backoffice/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+
+{% block content %}
+
+<p style="margin-bottom:18px">
+  <a class="btn" href="{% url 'staff_new_booking' %}"><i class="fa-solid fa-plus"></i>&nbsp; New booking</a>
+</p>
+
+{% for row in rows %}
+{% with d=row.today|date:"Y-m-d" n=forloop.counter %}
+
+<!-- summary cards -->
+<div class="stats">
+  <div class="stat blue"><i class="fa-solid fa-right-to-bracket"></i><b>{{ row.arrivals }}</b><span>Arrivals today</span></div>
+  <div class="stat sky"><i class="fa-solid fa-person-shelter"></i><b>{{ row.in_house }}</b><span>In house</span></div>
+  <div class="stat cyan"><i class="fa-solid fa-right-from-bracket"></i><b>{{ row.due_out }}</b><span>Due out</span></div>
+  <div class="stat mint"><i class="fa-solid fa-broom"></i><b>{{ row.dirty_rooms }}</b><span>Rooms to clean</span></div>
+</div>
+
+<section class="panel" id="prop-{{ n }}">
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab on" data-pane="overview-{{ n }}">Overview</button>
+    <button type="button" class="tab" data-pane="arrivals-{{ n }}">Arrivals today</button>
+    <button type="button" class="tab" data-pane="dueout-{{ n }}">Due out</button>
+    {% if row.rooms %}<button type="button" class="tab" data-pane="rooms-{{ n }}">Rooms</button>{% endif %}
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="pane on" id="overview-{{ n }}">
+    <div class="pane-title">{{ row.property.name }} <small class="muted" style="font-size:12px;font-weight:400">{{ row.today|date:"l, d M Y" }} &middot; {{ row.property.timezone }}</small></div>
+
+    <div class="chips">
+      <a class="chip" href="{% url 'staff_bookings' %}?property={{ row.property.slug }}&status=CONFIRMED&date_from={{ d }}&date_to={{ d }}">Arrivals <b>{{ row.arrivals }}</b></a>
+      <a class="chip" href="{% url 'staff_bookings' %}?property={{ row.property.slug }}&status=CHECKED_IN">In house <b>{{ row.in_house }}</b></a>
+      <a class="chip" href="{% url 'staff_bookings' %}?property={{ row.property.slug }}&status=PENDING">Holds <b>{{ row.holds }}</b></a>
+      <span class="chip {% if row.pending_extensions %}alert{% endif %}">Extension requests <b>{{ row.pending_extensions }}</b></span>
+      {% if row.refunds is not None %}<span class="chip {% if row.refunds %}alert{% endif %}">Refunds required <b>{{ row.refunds }}</b></span>{% endif %}
+    </div>
+
+    <div class="bar">
+      <span>{{ row.property.name }}</span>
+      <span>
+        <a class="btn sec" href="{% url 'staff_bookings' %}?property={{ row.property.slug }}">Bookings</a>
+        {% if is_manager %}
+          <a class="btn sec" href="{% url 'staff_rooms' %}?property={{ row.property.slug }}">Rooms</a>
+          <a class="btn sec" href="{% url 'staff_property_edit' row.property.pk %}">Edit</a>
+        {% endif %}
+      </span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Property</th><th>Total rooms</th><th>Occupied</th><th>Available</th><th>To clean</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>{{ row.property.name }}</strong><br><small class="muted">{{ row.property.slug }}</small></td>
+            <td>{{ row.total_rooms|default:"0" }}</td>
+            <td>{{ row.occupied_rooms|default:"0" }}</td>
+            <td>{{ row.available_rooms|default:"0" }}</td>
+            <td>{{ row.dirty_rooms|default:"0" }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ARRIVALS -->
+  <div class="pane" id="arrivals-{{ n }}">
+    <div class="pane-title">Arrivals today</div>
+    {% if row.arrival_list %}
+    <div class="bar"><span>{{ row.property.name }}</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Reference</th><th>Guest</th><th>Room</th><th>Paid</th></tr></thead>
+      <tbody>
+      {% for b in row.arrival_list %}<tr>
+        <td><a href="{% url 'staff_booking_detail' b.reference %}">{{ b.reference }}</a></td>
+        <td>{{ b.customer_name }}</td>
+        <td>{{ b.room.number }}</td>
+        <td><span class="badge p-{{ b.payment_status|lower }}">{{ b.get_payment_status_display }}</span></td>
+      </tr>{% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="muted">No arrivals today.</p>{% endif %}
+  </div>
+
+  <!-- DUE OUT -->
+  <div class="pane" id="dueout-{{ n }}">
+    <div class="pane-title">Due out</div>
+    {% if row.due_out_list %}
+    <div class="bar"><span>{{ row.property.name }}</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Reference</th><th>Guest</th><th>Room</th><th>Paid</th></tr></thead>
+      <tbody>
+      {% for b in row.due_out_list %}<tr>
+        <td><a href="{% url 'staff_booking_detail' b.reference %}">{{ b.reference }}</a></td>
+        <td>{{ b.customer_name }}</td>
+        <td>{{ b.room.number }}</td>
+        <td><span class="badge p-{{ b.payment_status|lower }}">{{ b.get_payment_status_display }}</span></td>
+      </tr>{% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="muted">Nobody due out.</p>{% endif %}
+  </div>
+
+  <!-- ROOMS -->
+  {% if row.rooms %}
+  <div class="pane" id="rooms-{{ n }}">
+    <div class="pane-title">Rooms</div>
+    <div class="bar"><span>{{ row.property.name }}</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Number</th><th>Type</th><th>Status</th><th>Housekeeping</th></tr></thead>
+      <tbody>
+      {% for r in row.rooms %}<tr>
+        <td>{{ r.number }}</td>
+        <td>{{ r.room_type|default:"—" }}</td>
+        <td><span class="badge s-{{ r.status|lower }}">{{ r.status }}</span></td>
+        <td>{% if r.dirty %}<span class="badge p-unpaid">Dirty</span>{% else %}<span class="badge p-paid">Clean</span>{% endif %}</td>
+      </tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  {% endif %}
+
+</section>
+
+{% endwith %}
+{% empty %}
+<p class="card muted">You are not assigned to any property.</p>
+{% endfor %}
+
+<script>
+(function () {
+  document.querySelectorAll('.panel').forEach(function (panel) {
+    var tabs = panel.querySelectorAll('.tab'), panes = panel.querySelectorAll('.pane');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.toggle('on', t === tab); });
+        panes.forEach(function (p) { p.classList.toggle('on', p.id === tab.dataset.pane); });
+      });
+    });
+  });
+})();
+</script>
+
+{% endblock %}

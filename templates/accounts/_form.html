@@ -1,0 +1,11 @@
+<form method="post" class="form-stack" novalidate>
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% for e in field.errors %}<span class="error">{{ e }}</span>{% endfor %}
+  {% endfor %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button type="submit">{{ submit_label }}</button>
+</form>

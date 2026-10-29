@@ -1,0 +1,336 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_name }} - Booking Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans+Condensed:wght@700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/booking.css' %}">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="brand-logo">
+            <a href="{% url 'home' %}"><img src="{% static 'img/logo.webp' %}" alt="{{ site_name }}" class="logo-img"></a>
+        </div>
+        <div class="header-nav">
+            <a href="{% url 'home' %}" class="btn-cancel">HOME</a>
+            <a href="{% url 'property_list' %}" class="btn-cancel">PROPERTIES</a>
+        </div>
+    </header>
+
+    <div class="search-bar">
+        <div class="search-group" id="checkin-group">
+            <label>Check-In</label>
+            <input type="text" id="checkin-input" value="{{ check_in|date:'d M Y, D' }}" data-date="{{ check_in|date:'Y-m-d' }}" readonly>
+            <i class="fa-regular fa-calendar icon"></i>
+        </div>
+        <div class="search-group" id="checkout-group">
+            <label>Check-Out</label>
+            <input type="text" id="checkout-input" value="{{ check_out|date:'d M Y, D' }}" data-date="{{ check_out|date:'Y-m-d' }}" readonly>
+            <i class="fa-regular fa-calendar icon"></i>
+        </div>
+        <div class="search-group" style="flex: 1.5;">
+            <label>Room/Guest</label>
+            <select id="room-guest-select"><option value="">0 Room, 0 Adult, 0 Children</option></select>
+        </div>
+        <button class="btn-search" id="btn-search">SEARCH</button>
+
+        <div class="calendar-popup" id="calendar-popup">
+            <div class="calendar-header-inputs">
+                <div class="calendar-input-box">
+                    <i class="fa-regular fa-calendar" style="color: #48bb78;"></i>
+                    <span id="cal-checkin-label"></span>
+                </div>
+                <div class="calendar-input-box" style="border-color: #ccc;">
+                    <i class="fa-regular fa-calendar" style="color: #777;"></i>
+                    <span id="cal-checkout-label"></span>
+                </div>
+            </div>
+            <div class="calendar-grid-container" id="calendar-grid-container"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;">
+                <button type="button" id="cal-prev" style="border:1px solid #ccc;background:#fff;border-radius:4px;padding:4px 12px;cursor:pointer;">&larr; Prev</button>
+                <button type="button" id="cal-next" style="border:1px solid #ccc;background:#fff;border-radius:4px;padding:4px 12px;cursor:pointer;">Next &rarr;</button>
+            </div>
+            <div class="calendar-footer">Select your check-in date, then your check-out date</div>
+        </div>
+    </div>
+
+    <div class="banner">
+        <h1>{{ site_name|upper }}</h1>
+        <div class="subtitle">Serviced Apartments</div>
+    </div>
+
+    <div class="main-content">
+        <div class="left-column" id="center-content">
+
+            <div id="room-selection-view">
+                {% if form_errors %}
+                <div class="validation-error" style="display:block;">
+                    <ul>{% for e in form_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                </div>
+                {% endif %}
+
+                {% for group in groups %}
+                <div class="section-header">
+                    {{ group.property.name }}
+                    <span style="font-size:12px;font-weight:400;font-family:'Open Sans',sans-serif;display:block;color:#d4a743;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ group.property.address_line }}, {{ group.property.city }}, {{ group.property.state }}
+                    </span>
+                </div>
+
+                {% for item in group.items %}
+                <div class="room-card{% if item.available_count < 1 %} sold-out{% endif %}"
+                     data-key="{{ item.key }}"
+                     data-title="{{ item.room_type }}"
+                     data-monthly="{{ item.monthly_only|yesno:'1,0' }}">
+                    <div class="room-details">
+                        <div class="room-img-container">
+                            <span class="people-tag" data-holding{% if not item.holding_count %} hidden{% endif %}>{% if item.holding_count %}{{ item.holding_count }} {% if item.holding_count == 1 %}person is{% else %}people are{% endif %} booking now{% endif %}</span>
+                            <span class="sold-out-tag">Sold Out</span>
+                            {% if item.monthly_only %}
+                            <span class="monthly-tag"><i class="fas fa-calendar-alt"></i> Monthly Stay</span>
+                            {% endif %}
+                            {% if item.cover_url %}
+                            <img src="{{ item.cover_url }}" alt="{{ item.room_type }}">
+                            {% else %}
+                            <div class="no-image-placeholder"><i class="fas fa-image"></i><div>NO IMAGE</div></div>
+                            {% endif %}
+                        </div>
+                        <div class="room-info">
+                            <div class="room-title">{{ item.room_type }}</div>
+                            <a href="#" class="room-amenities-link" data-open-tab="amenities">{{ item.amenity_names|join:", "|default:"Amenities" }}</a>
+                            <div class="room-specs">
+                                <div><i class="fa-solid fa-user-group"></i> <span>Max Occupancy : {{ item.max_guests }}</span></div>
+                                <div><i class="fa-solid fa-bed"></i> <span>Bed Type : {{ item.bed_type }} - {{ item.bed_count }}</span> <a href="#" class="more-link">MORE</a></div>
+                                <div><i class="fa-solid fa-building"></i> <span data-units>Units Available : {{ item.available_count }}</span></div>
+                                {% if item.monthly_only %}
+                                <div class="monthly-note"><i class="fa-solid fa-calendar-days"></i> <span>Monthly stay only - book in whole months</span></div>
+                                {% endif %}
+                                <div class="availability-note{% if item.available_count == 0 %} none{% elif item.available_count <= 2 %} low{% endif %}" data-avail-note>{% if item.available_count == 0 %}No units available for these dates{% elif item.available_count <= 2 %}Only {{ item.available_count }} unit(s) left for these dates{% endif %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="room-action-bar">
+                        <div class="price-info">
+                            <div class="room-type">Room Only</div>
+                            <div class="occupancy">Per night{% if item.monthly_only %} (monthly stay){% endif %}</div>
+                        </div>
+                        <div class="price-tag">
+                            <div class="amount">₹ {{ item.price|floatformat:2 }}</div>
+                            <div class="tax-info">Per night (+ taxes at checkout)</div>
+                        </div>
+                        <button class="btn-toggle-room" {% if item.available_count < 1 %}disabled{% endif %}>{% if item.available_count < 1 %}SOLD OUT{% else %}ADD{% endif %}</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% empty %}
+                <div class="form-card"><p style="color:#718096;">No rooms are listed for these dates.</p></div>
+                {% endfor %}
+            </div>
+
+            <div id="guest-details-view" style="display: none;">
+                <div class="form-card">
+                    <div class="form-card-title">Guest Details</div>
+                    <div id="validation-error" class="validation-error"><ul id="error-list"></ul></div>
+                    <div class="form-grid">
+                        <div class="form-field" id="field-firstname">
+                            <input type="text" id="first-name" placeholder="First Name *" maxlength="100" autocomplete="given-name">
+                            <span class="error-text">First Name is required</span>
+                        </div>
+                        <div class="form-field" id="field-lastname">
+                            <input type="text" id="last-name" placeholder="Last Name *" maxlength="100" autocomplete="family-name">
+                            <span class="error-text">Last Name is required</span>
+                        </div>
+                        <div class="form-field" id="field-email">
+                            <input type="email" id="email" placeholder="Email *" maxlength="254" autocomplete="email">
+                            <span class="error-text">Valid Email is required</span>
+                        </div>
+                        <div class="form-field" id="field-phone">
+                            <div class="phone-input-wrapper">
+                                <span>🇮🇳</span><span style="color:#666;font-size:14px;">+91</span>
+                                <input type="text" id="phone" placeholder="Phone Number *" maxlength="30" autocomplete="tel-national">
+                            </div>
+                            <span class="error-text">Valid Phone number is required (10-15 digits)</span>
+                        </div>
+                    </div>
+
+                    {% if otp_enabled %}
+                    <div class="otp-row" id="otp-request-row">
+                        <button type="button" class="btn-otp" id="btn-send-otp"><i class="fas fa-envelope"></i> Send Verification Code</button>
+                    </div>
+                    <div class="otp-row" id="otp-verify-row" style="display:none;">
+                        <div class="form-field" style="margin-bottom:0;">
+                            <input type="text" id="otp-input" placeholder="6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+                        </div>
+                        <button type="button" class="btn-otp" id="btn-verify-otp">Verify</button>
+                        <button type="button" class="btn-otp secondary" id="btn-resend-otp" disabled>Resend (<span id="resend-timer">60</span>s)</button>
+                    </div>
+                    <div class="otp-status" id="otp-status"></div>
+                    <div class="verified-badge" id="verified-badge"><i class="fas fa-check-circle"></i> Email verified</div>
+                    {% endif %}
+                </div>
+                <div class="form-card">
+                    <div class="form-card-title">Do you have any special request?</div>
+                    <div class="form-field"><input type="text" id="special-request" placeholder="Enter your special request" maxlength="500"></div>
+                </div>
+                <div class="form-card">
+                    <div class="form-card-title">Payment</div>
+                    <p style="font-size:14px;color:#718096;">Your rooms are held for 30 minutes after you reserve them.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="steps-container">
+                <div class="step active" id="step-1"><div class="step-number">1</div><span>Select Room</span></div>
+                <div class="step" id="step-2"><div class="step-number">2</div><span>Guest Details</span></div>
+                <div class="step" id="step-3"><div class="step-number">3</div><span>Secure Payment</span></div>
+            </div>
+            <div class="summary-panel">
+                <div class="summary-header">
+                    <span class="summary-title">Booking Summary</span>
+                    <a href="#" class="share-link">SHARE LINK</a>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-row">
+                        <span>Rooms <strong id="summary-rooms">0</strong></span>
+                        <span>Total Guest <strong id="summary-guests">0</strong></span>
+                        <span>Nights <strong id="summary-nights">1</strong></span>
+                    </div>
+                    <div class="date-row">
+                        <div class="date-box"><label>Check-In :</label><span id="summary-checkin">{{ check_in|date:'jS M Y' }}</span></div>
+                        <div class="date-box" style="text-align:right;"><label>Check-Out :</label><span id="summary-checkout">{{ check_out|date:'jS M Y' }}</span></div>
+                    </div>
+                </div>
+                <div id="summary-error" class="validation-error" role="alert"></div>
+                <div class="total-payable">
+                    <label>Total Payable</label>
+                    <span class="amount" id="summary-total">₹ 0.00</span>
+                </div>
+                <a href="#" class="view-details">VIEW ALL DETAILS</a>
+                <div id="terms-container" style="display: none;">
+                    <div class="terms-box">
+                        <input type="checkbox" id="agree-terms" checked>
+                        <label for="agree-terms">I agree to the <a href="#">Terms &amp; Conditions</a> and <a href="#">Refund &amp; Cancellation Policy</a></label>
+                    </div>
+                </div>
+                <button class="btn-action-submit" id="btn-main-action">PROCEED</button>
+                <div class="booking-note">Welcome to {{ site_name }} Online Booking.</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-info">
+            <div>
+                {% if site.address %}
+                <strong>ADDRESS</strong>
+                <div class="footer-address">{{ site.address }}</div>
+                {% endif %}
+                {% if site.phones %}
+                <div class="footer-contact">
+                    {% for p in site.phones %}<span><strong>CONTACT</strong><br>{{ p }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                {% if site.email %}
+                <div class="footer-contact"><span><strong>EMAIL</strong><br>{{ site.email }}</span></div>
+                {% endif %}
+            </div>
+            <div class="badges"><div class="badge-verified"><i class="fa-solid fa-shield-halved"></i> VERIFIED &amp; SECURED</div></div>
+        </div>
+    </footer>
+
+    <div class="payment-bar">
+        <div class="payment-icons">
+            <span class="payment-card" style="color:#1a0b52;">VISA</span>
+            <span class="payment-card" style="color:#eb001b;">Mastercard</span>
+            <span class="payment-card" style="color:#006fcf;">AMEX</span>
+            <span class="payment-card" style="color:#5f259f;">UPI</span>
+            <span class="payment-card" style="color:#004b8d;">Net Banking</span>
+            <span class="payment-card" style="color:#ff6600;">Wallets</span>
+        </div>
+        <div class="powered-by">
+            Crafted By
+            <a href="https://mckbytes.com" class="mck-link"><img src="{% static 'img/mck-white.png' %}" alt="mckbytes" class="mck-logo"></a>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="room-details-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-title">Room Details</h3>
+            <button class="modal-close-btn" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-tabs">
+            <div class="modal-tab active" data-tab="images">IMAGES</div>
+            <div class="modal-tab" data-tab="details">ROOM DETAILS</div>
+            <div class="modal-tab" data-tab="cancellation">CANCELLATION</div>
+            <div class="modal-tab" data-tab="tc">T&amp;C</div>
+            <div class="modal-tab" data-tab="amenities">AMENITIES</div>
+            <div class="modal-tab" data-tab="bedtypes">BED TYPES</div>
+        </div>
+        <div class="modal-body" id="modal-body-content"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="monthly-modal">
+    <div class="modal-box monthly-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-alt"></i> Monthly Stay</h3>
+            <button class="modal-close-btn" id="monthly-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="monthly-intro" id="monthly-msg"></div>
+            <div class="monthly-row">
+                <label for="monthly-months">How many months?</label>
+                <select id="monthly-months">
+                    <option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option>
+                    <option value="4">4 months</option><option value="5">5 months</option><option value="6">6 months</option>
+                    <option value="7">7 months</option><option value="8">8 months</option><option value="9">9 months</option>
+                    <option value="10">10 months</option><option value="11">11 months</option><option value="12">12 months</option>
+                </select>
+            </div>
+            <div class="monthly-preview">
+                <div><span>Check-in</span><strong id="monthly-prev-in">-</strong></div>
+                <div><span>Check-out</span><strong id="monthly-prev-out">-</strong></div>
+                <div><span>Nights</span><strong id="monthly-prev-nights">-</strong></div>
+            </div>
+            <div class="monthly-actions">
+                <button type="button" class="btn-monthly-secondary" id="monthly-cancel">Cancel</button>
+                <button type="button" class="btn-monthly-primary" id="monthly-continue">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ room_data|json_script:"room-data" }}
+<script>
+    window.BOOKING_CONFIG = {
+        today: "{{ today|date:'Y-m-d' }}",
+        csrf: "{{ csrf_token }}",
+        otpRequired: {{ otp_enabled|yesno:"true,false" }},
+        urls: {
+            availability: "{% url 'booking_availability' %}",
+            quote: "{% url 'booking_quote' %}",
+            hold: "{% url 'booking_hold' %}",
+            success: "{% url 'booking_success' %}",
+            sendOtp: "/api/v1/otp/send/",
+            verifyOtp: "/api/v1/otp/verify/",
+            createOrder: "{% url 'booking_create_order' %}",
+            verifyPayment: "{% url 'booking_verify_payment' %}",
+        }
+    };
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script src="{% static 'js/booking.js' %}"></script>
+</body>
+</html>

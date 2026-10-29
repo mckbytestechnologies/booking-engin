@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}My bookings{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ac-hero{margin:-24px -16px 26px;padding:40px 20px 54px;background:linear-gradient(120deg,#1d2b4f,#2c3e6b);color:#fff;border-radius:0 0 14px 14px}
+  .ac-hero .in{max-width:1000px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .ac-hero h1{font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:34px;letter-spacing:.06em;line-height:1.1}
+  .ac-hero p{color:#d4a743;margin-top:6px;font-size:14px}
+  .ac-who{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 16px 7px 8px;font-size:13px;font-weight:600}
+  .ac-who .av{width:26px;height:26px;border-radius:50%;background:#fff;color:#1d2b4f;display:flex;align-items:center;justify-content:center;font-size:12px}
+
+  .ac-wrap{max-width:1000px;margin:0 auto}
+  .ac-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .ac-count{font-size:13px;color:#718096}
+  .ac-new{background:#2f9e6b;color:#fff;text-decoration:none;border-radius:6px;padding:9px 22px;font-weight:700;font-size:13px}
+  .ac-new:hover{background:#25805a}
+
+  .ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:18px}
+  .ac-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .ac-head{background:#1d2b4f;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .ac-head .ref{font-weight:700;letter-spacing:.06em}
+  .ac-body{padding:16px 18px;flex:1}
+  .ac-prop{font-size:16px;font-weight:700;color:#1d2b4f}
+  .ac-prop small{display:block;font-weight:400;color:#718096;font-size:12.5px;margin-top:1px}
+  .ac-dates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .ac-dates label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#718096;margin-bottom:2px}
+  .ac-dates span{font-weight:600;font-size:13.5px}
+  .ac-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+
+  .badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;background:#edf0f8;color:#4a5578}
+  .ac-head .badge{background:rgba(255,255,255,.18);color:#fff}
+  .badge.s-confirmed{background:#e6fffa;color:#234e52}
+  .badge.s-checked_in{background:#e6eeff;color:#2a4a9b}
+  .badge.s-pending{background:#fff6e6;color:#7b4a1e}
+  .badge.s-cancelled,.badge.s-no_show,.badge.s-expired{background:#fff0f0;color:#9b2c2c}
+  .badge.s-checked_out{background:#edf0f8;color:#4a5578}
+  .badge.p-paid{background:#e8f9ef;color:#22543d}
+  .badge.p-unpaid{background:#fff0f0;color:#9b2c2c}
+  .badge.p-partially_paid{background:#fff6e6;color:#7b4a1e}
+  .badge.p-refunded{background:#edf0f8;color:#4a5578}
+
+  .ac-ext{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+  .ac-ext div{font-size:12.5px;color:#4a5578;background:#f4f6fb;border-radius:6px;padding:7px 12px}
+  .ac-ext i{color:#4568dc;margin-right:6px}
+
+  .ac-foot{border-top:1px dashed #e2e8f0;background:#fafbfc;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .ac-foot .total{font-size:20px;font-weight:700;color:#1d2b4f}
+  .ac-foot .total small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#718096}
+  .ac-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .ac-btn{border-radius:6px;padding:7px 16px;font-weight:700;font-size:12px;text-decoration:none;border:1px solid #b9c6f3;color:#4568dc;background:#fff}
+  .ac-btn:hover{background:#eef2ff}
+  .ac-btn.danger{border-color:#f1b5b5;color:#c53030}
+  .ac-btn.danger:hover{background:#fff0f0}
+
+  .ac-empty{background:#fff;border:1px dashed #cbd5e0;border-radius:10px;padding:40px 20px;text-align:center;color:#718096;grid-column:1/-1}
+  .ac-empty i{font-size:30px;color:#a0aec0;display:block;margin-bottom:10px}
+  .ac-empty a{color:#2f9e6b;font-weight:700}
+  @media(max-width:520px){.ac-grid{grid-template-columns:1fr}.ac-dates{grid-template-columns:1fr 1fr}.ac-hero h1{font-size:28px}}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="ac-hero">
+  <div class="in">
+    <div>
+      <h1>My bookings</h1>
+      <p>Your stays, in one place</p>
+    </div>
+    <div class="ac-who"><span class="av"><i class="fa-solid fa-user"></i></span>{{ user.email }}</div>
+  </div>
+</section>
+
+<div class="ac-wrap">
+  <div class="ac-top">
+    <span class="ac-count">{{ bookings|length }} booking{{ bookings|length|pluralize }}</span>
+    <a class="ac-new" href="{% url 'booking_engine' %}"><i class="fa-solid fa-plus"></i>&nbsp; Book another stay</a>
+  </div>
+
+  <div class="ac-grid">
+    {% for b in bookings %}
+    <article class="ac-card">
+      <div class="ac-head">
+        <span class="ref"><i class="fa-solid fa-ticket"></i>&nbsp; {{ b.reference }}</span>
+        <span class="badge s-{{ b.status|lower }}">{{ b.get_status_display }}</span>
+      </div>
+
+      <div class="ac-body">
+        <div class="ac-prop">{{ b.property.name }}<small>Room {{ b.room.number }}</small></div>
+
+        <div class="ac-dates">
+          <div><label>Check-in</label><span>{{ b.check_in|date:"d M Y" }}</span></div>
+          <div><label>Check-out</label><span>{{ b.check_out|date:"d M Y" }}</span></div>
+          <div><label>Nights</label><span>{{ b.nights }}</span></div>
+        </div>
+
+        <div class="ac-tags">
+          <span class="badge p-{{ b.payment_status|lower }}">{{ b.get_payment_status_display }}</span>
+        </div>
+
+        {% if b.extensions.all %}
+        <div class="ac-ext">
+          {% for e in b.extensions.all %}
+          <div><i class="fa-regular fa-calendar-plus"></i>Extension to {{ e.requested_check_out|date:"d M Y" }}: <strong>{{ e.get_status_display }}</strong></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="ac-foot">
+        <div class="total"><small>Total</small>&#8377;{{ b.total_amount }}</div>
+        <div class="ac-actions">
+          {% if b.status == "CONFIRMED" or b.status == "CHECKED_IN" %}<a class="ac-btn" href="{% url 'extend_booking' b.reference %}">Request extension</a>{% endif %}
+          {% if b.status == "PENDING" or b.status == "CONFIRMED" %}<a class="ac-btn danger" href="{% url 'cancel_booking' b.reference %}">Cancel booking</a>{% endif %}
+        </div>
+      </div>
+    </article>
+    {% empty %}
+    <div class="ac-empty">
+      <i class="fa-regular fa-calendar-xmark"></i>
+      No bookings yet. <a href="{% url 'booking_engine' %}">Find a room</a>.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

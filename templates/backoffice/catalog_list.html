@@ -1,0 +1,56 @@
+{% extends "backoffice/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .box{padding:0;overflow:hidden}
+  .note{background:#eef2ff;border:1px solid #d5ddfb;color:#2d3a63;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+  .note i{margin-top:3px;color:var(--blue)}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+  .row-actions form{display:inline;margin:0}
+  .row-actions .btn,.row-actions button{padding:4px 14px;font-size:11px}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if hint %}<p class="note"><i class="fa-solid fa-circle-info"></i><span>{{ hint }}</span></p>{% endif %}
+
+<section class="panel box">
+  <div class="bar" style="margin-top:0;border-radius:0">
+    <span>{{ title }} <small>{{ rows|length }} item{{ rows|length|pluralize }}</small></span>
+    <a class="btn sec" href="{{ new_url }}">+ {{ new_label }}</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+          <th class="right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          {% for c in r.cells %}<td>{{ c }}</td>{% endfor %}
+          <td>
+            <div class="row-actions">
+              {% if r.edit %}<a class="btn sec" href="{{ r.edit }}">Edit</a>{% endif %}
+              {% if r.delete %}
+              <form method="post" action="{{ r.delete }}" onsubmit="return confirm('Delete this item? This cannot be undone.')">
+                {% csrf_token %}<button type="submit" class="danger">Delete</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="{{ headers|length|add:1 }}" class="muted" style="text-align:center;padding:22px">{{ empty }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

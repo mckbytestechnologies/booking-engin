@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Properties{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pl-hero{margin:-24px -16px 28px;padding:44px 20px 64px;background:linear-gradient(120deg,#1d2b4f,#2c3e6b);color:#fff;text-align:center;border-radius:0 0 14px 14px}
+  .pl-hero h1{font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:36px;letter-spacing:.06em}
+  .pl-hero p{color:#d4a743;margin-top:6px}
+
+  .pl-filter{position:relative;max-width:720px;margin:-36px auto 30px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;box-shadow:0 10px 28px rgba(0,0,0,.1)}
+  .pl-filter .field{flex:1;min-width:200px}
+  .pl-filter label{display:block;font-size:11px;font-weight:600;color:#718096;margin-bottom:4px}
+  .pl-filter input{width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;font:inherit;background:#fff}
+  .pl-filter button{background:#2f9e6b;color:#fff;border:0;border-radius:6px;padding:11px 28px;font-weight:700;letter-spacing:.05em;cursor:pointer}
+  .pl-filter button:hover{background:#25805a}
+  .pl-filter .reset{color:#718096;font-size:13px;text-decoration:none;padding:11px 6px}
+  .pl-filter .reset:hover{color:#1d2b4f}
+
+  .pl-count{font-size:13px;color:#718096;margin-bottom:14px}
+  .pl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;margin-bottom:30px}
+  .pl-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
+  .pl-card:hover{box-shadow:0 10px 26px rgba(29,43,79,.12);transform:translateY(-2px)}
+  .pl-card .thumb{height:170px;background:linear-gradient(135deg,#e9edf2,#dfe7f1);display:flex;align-items:center;justify-content:center;color:#a0aec0;font-size:36px;overflow:hidden}
+  .pl-card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .pl-card .body{padding:16px 18px;flex:1}
+  .pl-card h3{font-size:18px;margin-bottom:4px;color:#1d2b4f}
+  .pl-card .where{font-size:13px;color:#b8891f;margin-bottom:8px}
+  .pl-card .desc{font-size:13px;color:#718096}
+  .pl-card .actions{padding:12px 18px;border-top:1px solid #e2e8f0;background:#fafbfc;display:flex;justify-content:space-between;align-items:center}
+  .pl-card .meta{font-size:12px;color:#718096}
+  .pl-card .btn{background:#2f9e6b;color:#fff;text-decoration:none;border-radius:6px;padding:8px 20px;font-weight:700;font-size:13px}
+  .pl-card .btn:hover{background:#25805a}
+  .pl-empty{grid-column:1/-1;background:#fff;border:1px dashed #cbd5e0;border-radius:10px;padding:34px;text-align:center;color:#718096}
+
+  .pl-pager{display:flex;gap:14px;align-items:center;justify-content:center;margin:10px 0 20px}
+  .pl-pager a{background:#fff;color:#1d2b4f;border:1px solid #cbd5e0;border-radius:6px;padding:8px 18px;text-decoration:none;font-weight:600;font-size:13px}
+  .pl-pager a:hover{background:#f4f6f8}
+  .pl-pager span{color:#718096;font-size:13px}
+  @media(max-width:640px){.pl-hero h1{font-size:28px}}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="pl-hero">
+  <h1>Our properties</h1>
+  <p>Find the right place for your stay</p>
+</section>
+
+<form method="get" class="pl-filter">
+  <div class="field">
+    <label for="pl-city">City</label>
+    <input id="pl-city" name="city" placeholder="Search by city" value="{{ request.GET.city }}">
+  </div>
+  <button type="submit"><i class="fa-solid fa-magnifying-glass"></i>&nbsp; FILTER</button>
+  {% if request.GET.city %}<a class="reset" href="{{ request.path }}">Clear</a>{% endif %}
+</form>
+
+<p class="pl-count">
+  {% if is_paginated %}{{ page_obj.paginator.count }}{% else %}{{ properties|length }}{% endif %}
+  propert{% if is_paginated %}{{ page_obj.paginator.count|pluralize:"y,ies" }}{% else %}{{ properties|length|pluralize:"y,ies" }}{% endif %}
+  {% if request.GET.city %}in &ldquo;{{ request.GET.city }}&rdquo;{% endif %}
+</p>
+
+<div class="pl-grid">
+  {% for p in properties %}
+  <article class="pl-card">
+    <div class="thumb">
+      {% with img=p.images.all|first %}
+        {% if img %}<img src="{{ img.image.url }}" alt="{{ img.caption|default:p.name }}">
+        {% else %}<i class="fa-regular fa-building"></i>{% endif %}
+      {% endwith %}
+    </div>
+    <div class="body">
+      <h3>{{ p.name }}</h3>
+      <div class="where"><i class="fas fa-map-marker-alt"></i> {{ p.city }}{% if p.state %}, {{ p.state }}{% endif %}</div>
+      {% if p.description %}<p class="desc">{{ p.description|truncatechars:100 }}</p>{% endif %}
+    </div>
+    <div class="actions">
+      <span class="meta"><i class="fa-regular fa-clock"></i> Check-in {{ p.check_in_time|time:"h:i A" }}</span>
+      <a class="btn" href="{% url 'booking_engine' %}?property={{ p.slug }}">Book now</a>
+    </div>
+  </article>
+  {% empty %}
+  <p class="pl-empty">No properties match your filter.</p>
+  {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav class="pl-pager">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if request.GET.city %}&city={{ request.GET.city|urlencode }}{% endif %}">&larr; Previous</a>{% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if request.GET.city %}&city={{ request.GET.city|urlencode }}{% endif %}">Next &rarr;</a>{% endif %}
+</nav>
+{% endif %}
+
+{% endblock %}

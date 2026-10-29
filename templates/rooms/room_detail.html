@@ -1,0 +1,566 @@
+ 
+{% extends "base.html" %}
+{% block title %}Room {{ room.number }} – {{ room.property.name }}{% endblock %}
+
+{% block content %}
+<style>
+  .room-page {
+    --room-navy: #1d2b4f;
+    --room-navy-light: #2c3e6b;
+    --room-green: #2f9e6b;
+    --room-green-dark: #25805a;
+    --room-gold: #d4a743;
+    --room-muted: #687386;
+    --room-border: #e5e9f0;
+    color: #202b3c;
+    padding: 18px 0 50px;
+  }
+
+  .room-page * { box-sizing: border-box; }
+
+  .room-page a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .room-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    color: var(--room-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .room-breadcrumb a {
+    color: var(--room-navy-light);
+    font-weight: 600;
+  }
+
+  .room-breadcrumb a:hover { color: var(--room-green); }
+
+  .room-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .room-eyebrow {
+    color: var(--room-green-dark);
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin: 0 0 8px;
+  }
+
+  .room-title {
+    color: var(--room-navy);
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -1.2px;
+    margin: 0 0 10px;
+    font-weight: 800;
+  }
+
+  .room-subtitle {
+    color: var(--room-muted);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .room-location-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--room-border);
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .room-gallery {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  .room-gallery-main,
+  .room-gallery-side a {
+    display: block;
+    overflow: hidden;
+    background: #edf1f6;
+    border-radius: 18px;
+    position: relative;
+  }
+
+  .room-gallery-main {
+    min-height: 320px;
+    max-height: 480px;
+  }
+
+  .room-gallery-main img {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    max-height: 480px;
+    display: block;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+
+  .room-gallery-side {
+    display: grid;
+    grid-template-rows: repeat(2, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .room-gallery-side a { min-height: 150px; }
+
+  .room-gallery-side img {
+    width: 100%;
+    height: 100%;
+    min-height: 150px;
+    display: block;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+
+  .room-gallery-main:hover img,
+  .room-gallery-side a:hover img { transform: scale(1.035); }
+
+  .room-no-image {
+    min-height: 320px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--room-muted);
+    background: linear-gradient(135deg, #eef2f7, #dfe7ef);
+    border-radius: 18px;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .room-no-image-symbol {
+    font-size: 42px;
+    color: var(--room-navy-light);
+  }
+
+  .room-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .room-main-column { min-width: 0; }
+
+  .room-panel {
+    background: #fff;
+    border: 1px solid var(--room-border);
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .room-panel h2 {
+    color: var(--room-navy);
+    font-size: 21px;
+    letter-spacing: -.4px;
+    margin: 0 0 16px;
+    font-weight: 800;
+  }
+
+  .room-description {
+    color: #596579;
+    line-height: 1.85;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+
+  .room-description p:last-child { margin-bottom: 0; }
+
+  .room-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .room-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #edf0f5;
+    border-radius: 13px;
+  }
+
+  .room-feature-icon {
+    flex: 0 0 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9f6ef;
+    color: var(--room-green-dark);
+    font-size: 19px;
+  }
+
+  .room-feature-label {
+    display: block;
+    color: var(--room-muted);
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .room-feature-value {
+    color: var(--room-navy);
+    font-size: 15px;
+    font-weight: 750;
+    line-height: 1.45;
+  }
+
+  .room-amenities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .room-amenity {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 13px;
+    border-radius: 10px;
+    border: 1px solid #dcefe4;
+    background: #f2faf5;
+    color: #286c4b;
+    font-size: 13px;
+    font-weight: 650;
+  }
+
+  .room-amenity-symbol { color: var(--room-green-dark); }
+
+  .room-empty {
+    color: var(--room-muted);
+    font-size: 14px;
+    padding: 14px 0 2px;
+  }
+
+  .room-booking-card {
+    position: sticky;
+    top: 20px;
+    border: 1px solid var(--room-border);
+    border-radius: 20px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 16px 45px rgba(29, 43, 79, .07);
+  }
+
+  .room-booking-top {
+    background: var(--room-navy);
+    color: #fff;
+    padding: 23px;
+  }
+
+  .room-booking-top small {
+    display: block;
+    color: #d0d9eb;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .room-price {
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 850;
+    letter-spacing: -.8px;
+  }
+
+  .room-price small {
+    display: inline;
+    color: #d0d9eb;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .room-booking-body { padding: 22px; }
+
+  .room-booking-property {
+    color: var(--room-muted);
+    font-size: 13px;
+    margin: 0 0 18px;
+    line-height: 1.6;
+  }
+
+  .room-booking-property strong {
+    display: block;
+    color: var(--room-navy);
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+
+  .room-booking-divider {
+    border: 0;
+    border-top: 1px solid var(--room-border);
+    margin: 18px 0;
+  }
+
+  .room-booking-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--room-muted);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .room-booking-note-symbol {
+    color: var(--room-green-dark);
+    font-weight: 800;
+  }
+
+  .room-back-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 12px 16px;
+    color: var(--room-navy);
+    border: 1px solid var(--room-border);
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 750;
+    transition: .2s ease;
+  }
+
+  .room-back-link:hover {
+    border-color: var(--room-green);
+    color: var(--room-green-dark);
+    background: #f5fbf7;
+  }
+
+  .room-policy-box {
+    background: #fffaf0;
+    border: 1px solid #f2e6c6;
+    border-radius: 13px;
+    padding: 15px;
+    color: #78612b;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 900px) {
+    .room-content-grid { grid-template-columns: minmax(0, 1fr) 280px; gap: 18px; }
+    .room-panel { padding: 20px; }
+    .room-gallery-main, .room-gallery-main img { min-height: 280px; }
+  }
+
+  @media (max-width: 700px) {
+    .room-page { padding-top: 10px; }
+    .room-gallery { grid-template-columns: 1fr; }
+    .room-gallery-main, .room-gallery-main img { min-height: 240px; max-height: 340px; }
+    .room-gallery-side { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 150px; }
+    .room-gallery-side a, .room-gallery-side img { min-height: 150px; }
+    .room-content-grid { grid-template-columns: 1fr; }
+    .room-booking-card { position: static; }
+    .room-feature-grid { gap: 9px; }
+    .room-feature { padding: 12px; gap: 10px; }
+    .room-feature-icon { flex-basis: 36px; height: 36px; }
+    .room-panel { padding: 18px; }
+    .room-heading { align-items: flex-start; }
+  }
+
+  @media (max-width: 420px) {
+    .room-feature-grid { grid-template-columns: 1fr; }
+    .room-title { font-size: 29px; }
+  }
+</style>
+
+<div class="room-page">
+  <nav class="room-breadcrumb" aria-label="Breadcrumb">
+    <a href="{% url 'property_detail' room.property.slug %}">← {{ room.property.name }}</a>
+    <span>/</span>
+    <span>Room {{ room.number }}</span>
+  </nav>
+
+  <header class="room-heading">
+    <div>
+      <p class="room-eyebrow">Your stay, your comfort</p>
+      <h1 class="room-title">Room {{ room.number }}{% if room.room_type.name %} – {{ room.room_type.name }}{% endif %}</h1>
+      <p class="room-subtitle">{{ room.property.name }} · {{ room.property.city }}, {{ room.property.state }}</p>
+    </div>
+    <div class="room-location-pill">
+      <span aria-hidden="true">⌖</span>
+      {{ room.property.city }}, {{ room.property.state }}
+    </div>
+  </header>
+
+  <section class="room-gallery" aria-label="Room photo gallery">
+    {% for img in room.images.all %}
+      {% if forloop.first %}
+        <a class="room-gallery-main" href="{{ img.image.url }}" target="_blank" rel="noopener">
+          <img src="{{ img.image.url }}" alt="{{ img.caption|default:room.number }}" fetchpriority="high">
+        </a>
+      {% endif %}
+    {% empty %}
+      <div class="room-no-image">
+        <span class="room-no-image-symbol" aria-hidden="true">⌂</span>
+        <strong>Room photos coming soon</strong>
+        <span>Images for this room will appear here.</span>
+      </div>
+    {% endfor %}
+
+    {% with images=room.images.all %}
+      {% if images|length > 1 %}
+        <div class="room-gallery-side">
+          {% for img in images %}
+            {% if forloop.counter == 2 or forloop.counter == 3 %}
+              <a href="{{ img.image.url }}" target="_blank" rel="noopener">
+                <img src="{{ img.image.url }}" alt="{{ img.caption|default:room.number }}" loading="lazy">
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </section>
+
+  <div class="room-content-grid">
+    <main class="room-main-column">
+      <section class="room-panel">
+        <h2>About this room</h2>
+        {% if room.description %}
+          <div class="room-description">{{ room.description|linebreaks }}</div>
+        {% else %}
+          <p class="room-description">Enjoy a comfortable stay at {{ room.property.name }}. Contact the property for more information about this room.</p>
+        {% endif %}
+      </section>
+
+      <section class="room-panel">
+        <h2>Room details</h2>
+        <div class="room-feature-grid">
+          <div class="room-feature">
+            <div class="room-feature-icon" aria-hidden="true">♙</div>
+            <div>
+              <span class="room-feature-label">Guest capacity</span>
+              <span class="room-feature-value">Up to {{ room.max_guests }} guests</span>
+            </div>
+          </div>
+
+          <div class="room-feature">
+            <div class="room-feature-icon" aria-hidden="true">▤</div>
+            <div>
+              <span class="room-feature-label">Bed arrangement</span>
+              <span class="room-feature-value">{{ room.bed_count }} × {{ room.bed_type.name }}</span>
+            </div>
+          </div>
+
+          {% if room.size %}
+            <div class="room-feature">
+              <div class="room-feature-icon" aria-hidden="true">↔</div>
+              <div>
+                <span class="room-feature-label">Room size</span>
+                <span class="room-feature-value">{{ room.size }} {{ room.get_size_unit_display }}</span>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="room-feature">
+            <div class="room-feature-icon" aria-hidden="true">⌂</div>
+            <div>
+              <span class="room-feature-label">Property</span>
+              <span class="room-feature-value">{{ room.property.name }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="room-panel">
+        <h2>Room amenities</h2>
+        <div class="room-amenities">
+          {% for a in room.amenities.all %}
+            <span class="room-amenity">
+              <span class="room-amenity-symbol" aria-hidden="true">✓</span>
+              {{ a.name }}
+            </span>
+          {% empty %}
+            <p class="room-empty">Room amenities have not been added yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="room-panel">
+        <h2>About the property</h2>
+        <div class="room-description">
+          <p><strong>{{ room.property.name }}</strong></p>
+          <p>{{ room.property.address_line }}, {{ room.property.city }}, {{ room.property.state }}, {{ room.property.country }}</p>
+          {% if room.property.description %}
+            <p>{{ room.property.description|linebreaksbr }}</p>
+          {% endif %}
+        </div>
+        <a class="room-back-link" href="{% url 'property_detail' room.property.slug %}">
+          View property and other rooms <span aria-hidden="true">→</span>
+        </a>
+      </section>
+    </main>
+
+    <aside>
+      <div class="room-booking-card">
+        <div class="room-booking-top">
+          <small>Room rate</small>
+          <div class="room-price">₹{{ room.price_per_night }} <small>/ night</small></div>
+        </div>
+
+        <div class="room-booking-body">
+          <p class="room-booking-property">
+            <strong>{{ room.property.name }}</strong>
+            {{ room.property.city }}, {{ room.property.state }}
+          </p>
+
+          <hr class="room-booking-divider">
+
+          <div class="room-booking-note">
+            <span class="room-booking-note-symbol" aria-hidden="true">✓</span>
+            <span>Capacity for up to {{ room.max_guests }} guests.</span>
+          </div>
+
+          <div class="room-booking-note" style="margin-top: 13px;">
+            <span class="room-booking-note-symbol" aria-hidden="true">✓</span>
+            <span>Check-in: {{ room.property.check_in_time|time:"H:i" }}<br>Check-out: {{ room.property.check_out_time|time:"H:i" }}</span>
+          </div>
+
+          <hr class="room-booking-divider">
+
+          <div class="room-policy-box">
+            <strong>Planning your stay</strong><br>
+            Online booking will be available when the booking module is enabled. Contact the property to ask about availability.
+          </div>
+
+          {% if room.property.phone %}
+            <a class="room-back-link" href="tel:{{ room.property.phone }}">Contact property · {{ room.property.phone }}</a>
+          {% endif %}
+
+          <a class="room-back-link" href="{% url 'property_detail' room.property.slug %}">
+            ← Back to property
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

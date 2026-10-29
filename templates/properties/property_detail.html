@@ -1,0 +1,1172 @@
+{% extends "base.html" %}
+{% block title %}{{ property.name }} | Find Your Stay{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --pd-navy: #1d2b4f;
+    --pd-navy-light: #2c3e6b;
+    --pd-green: #2f9e6b;
+    --pd-green-dark: #25805a;
+    --pd-gold: #d4a743;
+    --pd-text: #273449;
+    --pd-muted: #718096;
+    --pd-border: #e7ebf0;
+    --pd-soft: #f7f9fc;
+    --pd-white: #ffffff;
+  }
+
+  .pd-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+    color: var(--pd-text);
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  }
+
+  .pd-page * {
+    box-sizing: border-box;
+  }
+
+  .pd-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    align-items: center;
+    margin-bottom: 22px;
+    color: var(--pd-muted);
+    font-size: 12px;
+  }
+
+  .pd-breadcrumb a {
+    color: var(--pd-green-dark);
+    text-decoration: none;
+  }
+
+  .pd-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .pd-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .pd-eyebrow {
+    margin: 0 0 8px;
+    color: var(--pd-green-dark);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .pd-title {
+    margin: 0;
+    color: var(--pd-navy);
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 750;
+    letter-spacing: -.045em;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-location {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 12px 0 0;
+    color: var(--pd-muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .pd-location i {
+    margin-top: 4px;
+    color: var(--pd-green);
+  }
+
+  .pd-heading-actions {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pd-button {
+    display: inline-flex;
+    min-height: 44px;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 17px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .2s ease, transform .2s ease;
+    cursor: pointer;
+  }
+
+  .pd-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .pd-button-primary {
+    background: var(--pd-green);
+    color: #fff;
+  }
+
+  .pd-button-primary:hover {
+    background: var(--pd-green-dark);
+    color: #fff;
+  }
+
+  .pd-button-outline {
+    border-color: var(--pd-border);
+    background: #fff;
+    color: var(--pd-navy);
+  }
+
+  .pd-button-outline:hover {
+    background: var(--pd-soft);
+  }
+
+  /* PHOTO GALLERY */
+
+  .pd-gallery {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    border-radius: 13px;
+  }
+
+  .pd-gallery-main,
+  .pd-gallery-secondary {
+    position: relative;
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    background: #e9edf2;
+  }
+
+  .pd-gallery-main {
+    min-height: 370px;
+  }
+
+  .pd-gallery-side {
+    display: grid;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-height: 370px;
+  }
+
+  .pd-gallery-secondary {
+    min-height: 0;
+  }
+
+  .pd-gallery img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+
+  .pd-gallery a:hover img {
+    transform: scale(1.035);
+  }
+
+  .pd-gallery-main img {
+    position: absolute;
+    inset: 0;
+  }
+
+  .pd-gallery-secondary img {
+    position: absolute;
+    inset: 0;
+  }
+
+  .pd-gallery-label {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 1;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, .5);
+    border-radius: 6px;
+    background: rgba(20, 32, 53, .83);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .pd-gallery-empty {
+    display: flex;
+    min-height: 370px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #e9edf2, #dfe7f1);
+    color: var(--pd-muted);
+  }
+
+  .pd-gallery-empty i {
+    color: #9aa9ba;
+    font-size: 42px;
+  }
+
+  /* QUICK INFORMATION */
+
+  .pd-highlights {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .pd-highlight {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 17px;
+    border: 1px solid var(--pd-border);
+    border-radius: 9px;
+    background: #fff;
+  }
+
+  .pd-highlight-icon {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #edf7f1;
+    color: var(--pd-green-dark);
+    font-size: 16px;
+  }
+
+  .pd-highlight-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--pd-muted);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .pd-highlight-value {
+    display: block;
+    color: var(--pd-navy);
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  /* MAIN LAYOUT */
+
+  .pd-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    align-items: start;
+    gap: 30px;
+  }
+
+  .pd-main-column {
+    min-width: 0;
+  }
+
+  .pd-section {
+    margin-bottom: 32px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--pd-border);
+  }
+
+  .pd-section:last-child {
+    border-bottom: 0;
+  }
+
+  .pd-section-heading {
+    margin: 0 0 16px;
+    color: var(--pd-navy);
+    font-size: 23px;
+    font-weight: 750;
+    letter-spacing: -.035em;
+  }
+
+  .pd-section-subtitle {
+    margin: -7px 0 19px;
+    color: var(--pd-muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .pd-description {
+    color: #536174;
+    font-size: 14px;
+    line-height: 1.95;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-description p {
+    margin: 0 0 12px;
+  }
+
+  .pd-address-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    border: 1px solid var(--pd-border);
+    border-radius: 10px;
+    background: var(--pd-soft);
+  }
+
+  .pd-address-icon {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--pd-green-dark);
+    font-size: 18px;
+  }
+
+  .pd-address-card strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--pd-navy);
+    font-size: 14px;
+  }
+
+  .pd-address-card p {
+    margin: 0;
+    color: var(--pd-muted);
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  /* AMENITIES */
+
+  .pd-amenities {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .pd-amenity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid var(--pd-border);
+    border-radius: 8px;
+    color: #465568;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-amenity i {
+    flex-shrink: 0;
+    color: var(--pd-green);
+    font-size: 15px;
+  }
+
+  .pd-empty {
+    padding: 20px;
+    border: 1px dashed #cbd5e0;
+    border-radius: 9px;
+    color: var(--pd-muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  /* ROOMS */
+
+  .pd-room-list {
+    display: grid;
+    gap: 16px;
+  }
+
+  .pd-room-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    padding: 21px;
+    border: 1px solid var(--pd-border);
+    border-radius: 10px;
+    background: #fff;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+
+  .pd-room-card:hover {
+    border-color: #c8dfd2;
+    box-shadow: 0 8px 24px rgba(29, 43, 79, .06);
+  }
+
+  .pd-room-label {
+    margin: 0 0 7px;
+    color: var(--pd-green-dark);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+  }
+
+  .pd-room-title {
+    margin: 0 0 12px;
+    color: var(--pd-navy);
+    font-size: 19px;
+    font-weight: 750;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-room-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .pd-room-title a:hover {
+    color: var(--pd-green-dark);
+  }
+
+  .pd-room-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px 16px;
+    color: var(--pd-muted);
+    font-size: 12px;
+  }
+
+  .pd-room-feature {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .pd-room-feature i {
+    color: var(--pd-green);
+  }
+
+  .pd-room-price {
+    display: flex;
+    min-width: 130px;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    text-align: right;
+  }
+
+  .pd-price-label {
+    margin-bottom: 4px;
+    color: var(--pd-muted);
+    font-size: 11px;
+  }
+
+  .pd-price-value {
+    color: var(--pd-navy);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-price-unit {
+    margin-top: 3px;
+    color: var(--pd-muted);
+    font-size: 11px;
+  }
+
+  .pd-room-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 13px;
+    color: var(--pd-green-dark);
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .pd-room-link:hover {
+    text-decoration: underline;
+  }
+
+  /* SIDE PANEL */
+
+  .pd-sidebar {
+    position: sticky;
+    top: 22px;
+  }
+
+  .pd-side-card {
+    margin-bottom: 16px;
+    padding: 22px;
+    border: 1px solid var(--pd-border);
+    border-radius: 11px;
+    background: #fff;
+  }
+
+  .pd-side-card-dark {
+    border-color: var(--pd-navy);
+    background: var(--pd-navy);
+    color: #fff;
+  }
+
+  .pd-side-card-dark h3 {
+    margin: 0 0 9px;
+    color: #fff;
+    font-size: 20px;
+  }
+
+  .pd-side-card-dark > p {
+    margin: 0;
+    color: #d2d9e5;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .pd-side-card-dark .pd-button {
+    width: 100%;
+    margin-top: 18px;
+    background: var(--pd-green);
+    color: #fff;
+  }
+
+  .pd-side-card-dark .pd-button:hover {
+    background: var(--pd-green-dark);
+  }
+
+  .pd-side-heading {
+    margin: 0 0 17px;
+    color: var(--pd-navy);
+    font-size: 16px;
+    font-weight: 750;
+  }
+
+  .pd-policy-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 17px;
+  }
+
+  .pd-policy-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .pd-policy-row > i {
+    width: 18px;
+    padding-top: 3px;
+    color: var(--pd-green);
+    text-align: center;
+  }
+
+  .pd-policy-row strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--pd-navy);
+    font-size: 12px;
+  }
+
+  .pd-policy-row span {
+    display: block;
+    color: var(--pd-muted);
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-contact-link {
+    color: var(--pd-green-dark);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-contact-link:hover {
+    text-decoration: underline;
+  }
+
+  .pd-gold-line {
+    width: 38px;
+    height: 3px;
+    margin: 0 0 15px;
+    border-radius: 2px;
+    background: var(--pd-gold);
+  }
+
+  @media (max-width: 900px) {
+    .pd-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pd-sidebar {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .pd-side-card {
+      margin-bottom: 0;
+    }
+
+    .pd-gallery-main,
+    .pd-gallery-side {
+      min-height: 300px;
+    }
+
+    .pd-highlights {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .pd-page {
+      padding: 20px 14px 40px;
+    }
+
+    .pd-heading {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pd-heading-actions {
+      width: 100%;
+    }
+
+    .pd-heading-actions .pd-button {
+      flex: 1;
+    }
+
+    .pd-gallery {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      border-radius: 9px;
+    }
+
+    .pd-gallery-main,
+    .pd-gallery-empty {
+      min-height: 250px;
+    }
+
+    .pd-gallery-side {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: 125px;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .pd-highlights {
+      gap: 9px;
+    }
+
+    .pd-highlight {
+      gap: 9px;
+      padding: 12px;
+    }
+
+    .pd-highlight-icon {
+      width: 33px;
+      height: 33px;
+      font-size: 13px;
+    }
+
+    .pd-highlight-value {
+      font-size: 12px;
+    }
+
+    .pd-layout {
+      gap: 16px;
+    }
+
+    .pd-section-heading {
+      font-size: 21px;
+    }
+
+    .pd-amenities {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pd-room-card {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .pd-room-price {
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .pd-room-price .pd-button {
+      width: 100%;
+    }
+
+    .pd-sidebar {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="pd-page">
+
+  <!-- Breadcrumb -->
+  <nav class="pd-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+    <span>{{ property.name }}</span>
+  </nav>
+
+
+  <!-- Property heading -->
+  <header class="pd-heading">
+    <div>
+      <p class="pd-eyebrow">Discover your next stay</p>
+
+      <h1 class="pd-title">{{ property.name }}</h1>
+
+      <p class="pd-location">
+        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        <span>
+          {{ property.address_line }},
+          {{ property.city }},
+          {{ property.state }},
+          {{ property.country }}
+        </span>
+      </p>
+    </div>
+
+    <div class="pd-heading-actions">
+      <a class="pd-button pd-button-outline" href="#pd-rooms">
+        <i class="fa-solid fa-bed" aria-hidden="true"></i>
+        View rooms
+      </a>
+
+      <a class="pd-button pd-button-primary" href="#pd-amenities">
+        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+        Explore amenities
+      </a>
+    </div>
+  </header>
+
+
+  <!-- Property image gallery -->
+  {% with photos=property.images.all %}
+    {% if photos %}
+
+      <div class="pd-gallery">
+
+        <a
+          class="pd-gallery-main"
+          href="{{ photos.0.image.url }}"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View main property photo"
+        >
+          <img
+            src="{{ photos.0.image.url }}"
+            alt="{{ property.name }}"
+          >
+
+          {% if photos|length > 1 %}
+            <span class="pd-gallery-label">
+              <i class="fa-regular fa-images" aria-hidden="true"></i>
+              View gallery ({{ photos|length }})
+            </span>
+          {% endif %}
+        </a>
+
+        {% if photos|length > 1 %}
+          <div class="pd-gallery-side">
+
+            {% for photo in photos|slice:"1:3" %}
+              <a
+                class="pd-gallery-secondary"
+                href="{{ photo.image.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open property photo {{ forloop.counter|add:1 }}"
+              >
+                <img
+                  src="{{ photo.image.url }}"
+                  alt="{{ property.name }} photo {{ forloop.counter|add:1 }}"
+                  loading="lazy"
+                >
+              </a>
+            {% endfor %}
+
+          </div>
+        {% endif %}
+
+      </div>
+
+    {% else %}
+
+      <div class="pd-gallery-empty">
+        <i class="fa-regular fa-images" aria-hidden="true"></i>
+        <strong>Property photos coming soon</strong>
+      </div>
+
+    {% endif %}
+  {% endwith %}
+
+
+  <!-- Quick highlights -->
+  <div class="pd-highlights">
+
+    <div class="pd-highlight">
+      <div class="pd-highlight-icon">
+        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+      </div>
+      <div>
+        <span class="pd-highlight-label">Check-in</span>
+        <span class="pd-highlight-value">
+          {{ property.check_in_time|time:"g:i A" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="pd-highlight">
+      <div class="pd-highlight-icon">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+      </div>
+      <div>
+        <span class="pd-highlight-label">Check-out</span>
+        <span class="pd-highlight-value">
+          {{ property.check_out_time|time:"g:i A" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="pd-highlight">
+      <div class="pd-highlight-icon">
+        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+      </div>
+      <div>
+        <span class="pd-highlight-label">Local time zone</span>
+        <span class="pd-highlight-value">{{ property.timezone }}</span>
+      </div>
+    </div>
+
+    <div class="pd-highlight">
+      <div class="pd-highlight-icon">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+      </div>
+      <div>
+        <span class="pd-highlight-label">Cancellation window</span>
+        <span class="pd-highlight-value">
+          {{ property.free_cancellation_hours }} hours
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- Main content and sidebar -->
+  <div class="pd-layout">
+
+    <main class="pd-main-column">
+
+      <!-- About property -->
+      <section class="pd-section" id="pd-about">
+        <p class="pd-eyebrow">The property</p>
+        <h2 class="pd-section-heading">About this stay</h2>
+
+        <div class="pd-description">
+          {% if property.description %}
+            {{ property.description|linebreaks }}
+          {% else %}
+            <p>
+              Welcome to {{ property.name }} in {{ property.city }}.
+              Contact the property for more information about your stay.
+            </p>
+          {% endif %}
+        </div>
+      </section>
+
+
+      <!-- Location -->
+      <section class="pd-section">
+        <p class="pd-eyebrow">Find us</p>
+        <h2 class="pd-section-heading">Location & contact</h2>
+
+        <div class="pd-address-card">
+          <div class="pd-address-icon">
+            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          </div>
+
+          <div>
+            <strong>{{ property.name }}</strong>
+
+            <p>
+              {{ property.address_line }}<br>
+              {{ property.city }}, {{ property.state }}<br>
+              {{ property.country }}
+            </p>
+
+            <p style="margin-top: 12px;">
+              <i class="fa-solid fa-phone" aria-hidden="true"></i>
+              <a class="pd-contact-link" href="tel:{{ property.phone }}">
+                {{ property.phone }}
+              </a>
+            </p>
+
+            <p>
+              <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+              <a class="pd-contact-link" href="mailto:{{ property.email }}">
+                {{ property.email }}
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Amenities -->
+      <section class="pd-section" id="pd-amenities">
+        <p class="pd-eyebrow">Comfort & convenience</p>
+        <h2 class="pd-section-heading">Property amenities</h2>
+        <p class="pd-section-subtitle">
+          Explore the amenities listed for this property.
+        </p>
+
+        <div class="pd-amenities">
+          {% for a in property.amenities.all %}
+            <div class="pd-amenity">
+              <i class="fa-solid fa-check-circle" aria-hidden="true"></i>
+              <span>{{ a.name }}</span>
+            </div>
+          {% empty %}
+            <div class="pd-empty">
+              No amenities have been listed for this property yet.
+              Please contact the property for more information.
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+
+
+      <!-- Rooms -->
+      <section class="pd-section" id="pd-rooms">
+        <p class="pd-eyebrow">Find your perfect room</p>
+        <h2 class="pd-section-heading">Available room options</h2>
+        <p class="pd-section-subtitle">
+          Explore the rooms listed for {{ property.name }}.
+          Availability and final prices should be confirmed for your dates.
+        </p>
+
+        <div class="pd-room-list">
+          {% for room in property.active_rooms %}
+
+            <article class="pd-room-card">
+
+              <div>
+                <p class="pd-room-label">Room accommodation</p>
+
+                <h3 class="pd-room-title">
+                  <a href="{% url 'room_detail' room.pk %}">
+                    Room {{ room.number }} &ndash;
+                    {{ room.room_type.name }}
+                  </a>
+                </h3>
+
+                <div class="pd-room-features">
+
+                  <span class="pd-room-feature">
+                    <i class="fa-solid fa-users" aria-hidden="true"></i>
+                    Up to {{ room.max_guests }} guests
+                  </span>
+
+                  <span class="pd-room-feature">
+                    <i class="fa-solid fa-bed" aria-hidden="true"></i>
+                    {{ room.bed_count }} {{ room.bed_type.name }}
+                  </span>
+
+                </div>
+
+                <a
+                  class="pd-room-link"
+                  href="{% url 'room_detail' room.pk %}"
+                >
+                  View room details
+                  <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                </a>
+              </div>
+
+              <div class="pd-room-price">
+
+                <span class="pd-price-label">Listed price</span>
+
+                <span class="pd-price-value">
+                  &#8377;{{ room.price_per_night }}
+                </span>
+
+                <span class="pd-price-unit">per night</span>
+
+                <a
+                  class="pd-button pd-button-primary"
+                  href="{% url 'room_detail' room.pk %}"
+                >
+                  View room
+                </a>
+
+              </div>
+
+            </article>
+
+          {% empty %}
+
+            <div class="pd-empty">
+              <strong>No rooms are listed yet.</strong>
+              <p>
+                Please contact the property for room availability and
+                booking assistance.
+              </p>
+
+              <a
+                class="pd-button pd-button-primary"
+                href="mailto:{{ property.email }}"
+              >
+                <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+                Contact property
+              </a>
+            </div>
+
+          {% endfor %}
+        </div>
+      </section>
+
+    </main>
+
+
+    <!-- SIDEBAR -->
+    <aside class="pd-sidebar">
+
+      <div class="pd-side-card pd-side-card-dark">
+        <div class="pd-gold-line"></div>
+
+        <h3>Plan your stay</h3>
+
+        <p>
+          Explore room options at {{ property.name }} and check the
+          available accommodation for your travel dates.
+        </p>
+
+        <a class="pd-button" href="#pd-rooms">
+          <i class="fa-solid fa-bed" aria-hidden="true"></i>
+          Explore rooms
+        </a>
+      </div>
+
+
+      <div class="pd-side-card">
+        <h3 class="pd-side-heading">Stay information</h3>
+
+        <div class="pd-policy-row">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+          <div>
+            <strong>Check-in</strong>
+            <span>
+              {{ property.check_in_time|time:"g:i A" }}
+            </span>
+          </div>
+        </div>
+
+        <div class="pd-policy-row">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+          <div>
+            <strong>Check-out</strong>
+            <span>
+              {{ property.check_out_time|time:"g:i A" }}
+            </span>
+          </div>
+        </div>
+
+        <div class="pd-policy-row">
+          <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+          <div>
+            <strong>Cancellation window</strong>
+            <span>
+              {{ property.free_cancellation_hours }} hours configured.
+              Check your booking's cancellation terms for eligibility.
+            </span>
+          </div>
+        </div>
+
+        <div class="pd-policy-row">
+          <i class="fa-solid fa-receipt" aria-hidden="true"></i>
+          <div>
+            <strong>Configured tax rate</strong>
+            <span>
+              {{ property.tax_percent|floatformat:2 }}%
+            </span>
+          </div>
+        </div>
+
+        <div class="pd-policy-row">
+          <i class="fa-solid fa-clock" aria-hidden="true"></i>
+          <div>
+            <strong>Local time zone</strong>
+            <span>{{ property.timezone }}</span>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="pd-side-card">
+        <h3 class="pd-side-heading">Need assistance?</h3>
+
+        <div class="pd-policy-row">
+          <i class="fa-solid fa-phone" aria-hidden="true"></i>
+          <div>
+            <strong>Call the property</strong>
+            <span>
+              <a class="pd-contact-link" href="tel:{{ property.phone }}">
+                {{ property.phone }}
+              </a>
+            </span>
+          </div>
+        </div>
+
+        <div class="pd-policy-row">
+          <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+          <div>
+            <strong>Email the property</strong>
+            <span>
+              <a class="pd-contact-link" href="mailto:{{ property.email }}">
+                {{ property.email }}
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+{% endblock %}

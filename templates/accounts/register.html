@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h1>Create an account</h1>
+<p class="muted">We will email you a code to confirm your address.</p>
+{% include "accounts/_form.html" with submit_label="Send verification code" %}
+<p>Already registered? <a href="{% url 'login' %}">Log in</a></p>
+{% endblock %}

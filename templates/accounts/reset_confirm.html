@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+{% if validlink %}
+<h1>Choose a new password</h1>
+{% include "accounts/_form.html" with submit_label="Change password" %}
+{% else %}
+<h1>Link no longer valid</h1>
+<p>This reset link is no longer valid. <a href="{% url 'password_reset' %}">Request a new one</a>.</p>
+{% endif %}
+{% endblock %}

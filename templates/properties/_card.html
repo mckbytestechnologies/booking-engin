@@ -1,0 +1,10 @@
+<article class="card">
+  {% with img=property.images.all.0 %}
+    {% if img %}<img src="{{ img.image.url }}" alt="{{ property.name }}">{% endif %}
+  {% endwith %}
+  <div class="card-body">
+    <h3><a href="{% url 'property_detail' property.slug %}">{{ property.name }}</a></h3>
+    <p class="muted">{{ property.city }}, {{ property.state }}</p>
+    <p>{% for a in property.amenities.all|slice:":4" %}<span class="tag">{{ a.name }}</span>{% endfor %}</p>
+  </div>
+</article>

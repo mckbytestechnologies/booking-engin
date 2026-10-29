@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',Arial,sans-serif;background:linear-gradient(160deg,#071A2F,#0e2a47);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#1f2937}
+.box{background:#fff;width:100%;max-width:400px;border-radius:12px;padding:32px;border-top:4px solid #d4a743;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+h1{font-size:22px;margin-bottom:4px}p.sub{color:#718096;margin-bottom:20px;font-size:14px}
+label{display:block;font-size:12px;font-weight:700;color:#718096;margin:12px 0 4px}
+input{width:100%;font:inherit;padding:10px 12px;border:1px solid #cbd5e0;border-radius:6px}
+input:focus{outline:2px solid #2f9e6b;border-color:#2f9e6b}
+button{width:100%;margin-top:20px;font:inherit;font-weight:700;background:#2f9e6b;color:#fff;border:0;border-radius:6px;padding:11px;cursor:pointer}
+.err{background:#fff5f5;border:1px solid #feb2b2;color:#742a2a;border-radius:6px;padding:9px 12px;font-size:13px;margin-bottom:6px}
+.err ul{list-style:none}.foot{text-align:center;margin-top:18px;font-size:13px}.foot a{color:#718096}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Staff sign in</h1>
+  <p class="sub">Use the email and password issued to you.</p>
+  {% if locked %}<div class="err">Too many failed attempts. Please try again in 15 minutes.</div>{% endif %}
+  {% if form.non_field_errors %}<div class="err">{{ form.non_field_errors }}</div>{% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <label for="{{ form.username.id_for_label }}">Email</label>{{ form.username }}
+    <label for="{{ form.password.id_for_label }}">Password</label>{{ form.password }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit">Sign in</button>
+  </form>
+  <div class="foot"><a href="{% url 'home' %}">&larr; Back to the website</a></div>
+</div>
+</body>
+</html>

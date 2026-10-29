@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Something went wrong</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#1f2937;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px}
+    .box{max-width:520px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:32px;text-align:center}
+    h1{margin:0 0 8px;font-size:26px}
+    p{color:#718096;line-height:1.5}
+    code{background:#edf2f7;padding:2px 6px;border-radius:4px;color:#1f2937}
+    a{display:inline-block;margin-top:14px;background:#2f9e6b;color:#fff;text-decoration:none;border-radius:6px;padding:10px 24px;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Something went wrong</h1>
+    <p>We hit an unexpected problem. Please try again in a moment.</p>
+    {% if request_id and request_id != "-" %}<p>If it keeps happening, quote this ID: <code>{{ request_id }}</code></p>{% endif %}
+    <a href="/">Back to home</a>
+  </div>
+</body>
+</html>

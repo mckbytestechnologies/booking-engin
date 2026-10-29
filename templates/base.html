@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Hotel Booking{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans+Condensed:wght@700&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <style>
+    :root{--ink:#1f2937;--muted:#718096;--line:#e2e8f0;--bg:#f4f6f8;--green:#2f9e6b;--green-d:#25805a;--gold:#d4a743;--navy:#1d2b4f}
+    body{font-family:'Open Sans',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+    :focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+    .site-header{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;flex-wrap:wrap}
+    .site-header .brand{display:flex;align-items:center;gap:10px;font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:24px;letter-spacing:.05em;color:var(--navy);text-decoration:none}
+    .site-header .brand img{height:42px;width:auto;display:block}
+    .site-header nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .site-header nav a{padding:7px 14px;border-radius:6px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600}
+    .site-header nav a:hover{background:#e6f6ee;color:var(--green-d)}
+    .site-header nav a.cta{background:var(--green);color:#fff}
+    .site-header nav a.cta:hover{background:var(--green-d);color:#fff}
+    .site-header form.inline{display:inline;margin:0}
+    .site-header .linklike{background:none;border:0;padding:7px 14px;border-radius:6px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
+    .site-header .linklike:hover{background:#fdecec;color:#c53030}
+
+    .container{max-width:1200px;margin:0 auto;padding:24px 16px}
+    .site-footer{background:var(--navy);color:#cbd5e0;text-align:center;padding:20px 16px;font-size:13px;margin-top:30px}
+    .site-footer a{color:var(--gold);text-decoration:none}
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{% url 'home' %}">
+      <img src="{% static 'img/logo.webp' %}" alt="" onerror="this.style.display='none'">
+     
+    </a>
+    <nav>
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'property_list' %}">Properties</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'account' %}">My bookings</a>
+        {% if is_staff_member %}<a href="{% url 'staff_dashboard' %}">Staff</a>{% endif %}
+        <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button type="submit" class="linklike">Log out</button></form>
+      {% else %}
+        <a href="{% url 'login' %}">Log in</a>
+        <a href="{% url 'register' %}">Register</a>
+      {% endif %}
+      <a href="{% url 'booking_engine' %}" class="cta">Book now</a>
+    </nav>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">&copy; Hotel Booking &middot; Secure online booking</footer>
+</body>
+</html>

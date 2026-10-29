@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Page not found{% endblock %}
+{% block content %}
+<style>
+  .err-box{max-width:520px;margin:50px auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:32px;text-align:center}
+  .err-box h1{font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:30px;margin-bottom:8px}
+  .err-box p{color:#718096;margin-bottom:18px}
+  .err-box a{display:inline-block;background:#2f9e6b;color:#fff;text-decoration:none;border-radius:6px;padding:10px 24px;font-weight:700}
+</style>
+<div class="err-box">
+  <h1>Page not found</h1>
+  <p>The page you are looking for does not exist or has moved.</p>
+  <a href="{% url 'home' %}">Back to home</a>
+</div>
+{% endblock %}

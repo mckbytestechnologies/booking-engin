@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Extend stay{% endblock %}
+{% block content %}
+<h1>Extend booking {{ booking.reference }}</h1>
+<p>{{ booking.property.name }} &ndash; Room {{ booking.room.number }}. Current stay: {{ booking.check_in }} to {{ booking.check_out }}.</p>
+<p class="muted">Pick a new check-out date. The hotel confirms the request, and the added nights are priced at the room's current rate.</p>
+{% include "accounts/_form.html" with submit_label="Request extension" %}
+<p><a href="{% url 'account' %}">Back</a></p>
+{% endblock %}
+    {% if b.status == "CONFIRMED" or b.status == "CHECKED_IN" %}<p><a href="{% url 'extend_booking' b.reference %}">Request extension</a></p>{% endif %}
+    {% for e in b.extensions.all %}<p class="muted">Extension to {{ e.requested_check_out }}: {{ e.get_status_display }}</p>{% endfor %}
